@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1020" />
+  <meta name="description" content="A tiny, no-login Stanford CS review gym for derivations, formulas and first-principles intuition." />
+  <title>Stanford CS Gym · 胖猴复习器</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="./assets/styles.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/mathlive"></script>
+</head>
+<body>
+  <div class="noise"></div>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="Stanford CS Gym home">
+      <span class="brand-mark">🐒</span>
+      <span>
+        <strong>Stanford CS Gym</strong>
+        <small>derive · explain · repeat</small>
+      </span>
+    </a>
+    <nav class="top-actions">
+      <button class="ghost" data-scroll="courses">课程地图</button>
+      <button class="primary" id="shuffleTop">随机复习</button>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero shell">
+      <div class="hero-copy">
+        <div class="eyebrow">NO LOGIN · NO PROGRESS TRACKING · OPEN & REVIEW</div>
+        <h1>不是“看懂了”，而是<br><span>每次都能重新推出来。</span></h1>
+        <p>给 CS231n / CS336 / CS329A / CS349D 共用的长期知识底座。课程只是入口，真正维护的是跨课程的概念、推导与系统直觉。</p>
+        <div class="hero-actions">
+          <button class="primary big" id="startReview">🎲 抽一道复习题</button>
+          <button class="ghost big" data-scroll="derivation">🧠 从 Softmax 推到 KL</button>
+        </div>
+      </div>
+      <div class="hero-card">
+        <div class="mini-label">TODAY'S RULE</div>
+        <div class="rule">先写，再看提示。<br>先解释“为什么”，再背公式。</div>
+        <div class="formula-chain">
+          <span>logits</span><b>→</b><span>softmax</span><b>→</b><span>NLL</span><b>→</b><span>CE</span><b>→</b><span>KL</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell section" id="review">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">RANDOM REVIEW</div>
+          <h2>每次打开，随手抽一道</h2>
+        </div>
+        <div class="filter-row" id="courseFilters"></div>
+      </div>
+
+      <article class="review-card" id="reviewCard">
+        <div class="review-meta">
+          <span class="pill" id="reviewCourse">Shared Foundation</span>
+          <span class="pill muted" id="reviewType">Derivation</span>
+        </div>
+        <h3 id="reviewTitle">加载中…</h3>
+        <p id="reviewPrompt"></p>
+        <div class="math-input-wrap" id="mathInputWrap">
+          <math-field id="answerField" math-virtual-keyboard-policy="manual" aria-label="数学公式输入框"></math-field>
+          <div class="math-tools">
+            <button class="ghost small" id="showKeyboard">⌨ 数学键盘</button>
+            <button class="ghost small" id="clearAnswer">清空</button>
+          </div>
+        </div>
+        <textarea class="text-answer hidden" id="textAnswer" rows="4" placeholder="先用自己的话解释，不追求专业术语。"></textarea>
+        <div class="review-actions">
+          <button class="ghost" id="hintBtn">给一点提示</button>
+          <button class="ghost" id="revealBtn">看答案</button>
+          <button class="primary" id="nextBtn">下一题 →</button>
+        </div>
+        <div class="hint-box hidden" id="hintBox"></div>
+        <div class="answer-box hidden" id="answerBox"></div>
+      </article>
+    </section>
+
+    <section class="shell section" id="derivation">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">DERIVATION LAB</div>
+          <h2>把一条公式链亲手走通</h2>
+        </div>
+        <select id="derivationSelect" aria-label="选择推导"></select>
+      </div>
+      <div class="derivation-grid">
+        <div class="derivation-stage">
+          <div class="step-counter" id="stepCounter"></div>
+          <h3 id="stepTitle"></h3>
+          <p id="stepPrompt"></p>
+          <math-field id="deriveField" math-virtual-keyboard-policy="manual" aria-label="推导输入框"></math-field>
+          <div class="review-actions">
+            <button class="ghost" id="deriveHint">提示</button>
+            <button class="ghost" id="deriveReveal">揭晓这一步</button>
+            <button class="primary" id="deriveNext">下一步 →</button>
+          </div>
+          <div class="hint-box hidden" id="deriveHintBox"></div>
+          <div class="answer-box hidden" id="deriveAnswerBox"></div>
+        </div>
+        <aside class="derivation-sidebar">
+          <h4>为什么要这样学？</h4>
+          <p id="derivationWhy"></p>
+          <div class="ladder" id="derivationLadder"></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="shell section" id="scratchpad">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">FORMULA SCRATCHPAD</div>
+          <h2>不会 LaTeX 也能写</h2>
+        </div>
+      </div>
+      <div class="scratch-grid">
+        <div>
+          <math-field id="scratchField" math-virtual-keyboard-policy="manual" aria-label="自由公式草稿"></math-field>
+          <div class="review-actions">
+            <button class="primary" id="scratchKeyboard">⌨ 打开公式键盘</button>
+            <button class="ghost" id="copyLatex">复制 LaTeX</button>
+            <button class="ghost" id="clearScratch">清空</button>
+          </div>
+        </div>
+        <div class="cheatsheet">
+          <div><kbd>_</kbd><span>下标：p_i</span></div>
+          <div><kbd>^</kbd><span>上标：e^x</span></div>
+          <div><kbd>/</kbd><span>选中后可做分数，或点键盘分数模板</span></div>
+          <div><kbd>\sum</kbd><span>求和 Σ</span></div>
+          <div><kbd>\log</kbd><span>对数 log</span></div>
+          <div><kbd>\theta</kbd><span>希腊字母 θ</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell section" id="courses">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">COURSE MAP</div>
+          <h2>四门课，共享一套底层能力</h2>
+        </div>
+      </div>
+      <div class="course-grid" id="courseGrid"></div>
+    </section>
+
+    <section class="shell section">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">KNOWLEDGE GRAPH</div>
+          <h2>课程会变，基础节点不会白学</h2>
+        </div>
+      </div>
+      <div class="concept-grid" id="conceptGrid"></div>
+    </section>
+  </main>
+
+  <footer class="shell footer">
+    <span>🐒 Stanford CS Gym</span>
+    <span>Static · public · no account · no stored progress</span>
+  </footer>
+
+  <script type="module" src="./assets/app.js"></script>
+</body>
+</html>
