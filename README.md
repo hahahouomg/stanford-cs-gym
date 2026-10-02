@@ -42,7 +42,8 @@ This means future study sessions should usually update **curriculum data**, not 
 
 ## Current V1
 
-- Default: CS231n Lecture 2 (12 questions), with course / topic / type filters and direct question selection.
+- Default: CS231n Lecture 2 (12 questions), with course → lecture → current-lecture topic → question selection.
+- Separate cross-course practice entry for Softmax/CE/KL, attention, systems and agents. Future material is explicitly labeled; unnumbered course units do not claim official lecture mapping.
 - Compact tabs: practice, intuition experiment, derivation, notes/resources, scratchpad.
 - Shareable URL selection; no stored study progress.
 - Local Lecture 2 notes, a Softmax / NLL slider experiment, and verified official resource links.
@@ -82,7 +83,7 @@ node tests/pwa-smoke.cjs
 repository under `/stanford-cs-gym/`, matching GitHub Pages. It verifies an offline
 cold reload with HTTP cache disabled, all 20 font responses, formula keyboard and
 rendering, Lecture 2 selection, resource switching, the numeric experiment, an
-explicit atomic update, and failed-precache rejection. Mobile layout is tested in
+explicit atomic update, and failed-precache rejection. It also checks lecture/topic boundaries, cross-course mode, empty filters, old URL migration and the Lecture 2 derivation default. Mobile layout is tested in
 Chromium with iPhone dimensions; this is not a physical Safari/Add-to-Home-Screen test.
 
 ## Adding a review item

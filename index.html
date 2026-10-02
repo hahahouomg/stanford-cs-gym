@@ -23,7 +23,7 @@
   </header>
   <main>
     <section class="shell workspace">
-      <div class="workspace-head"><h1>今天练什么？</h1><label>课程 <select id="courseSelect" aria-label="选择课程"></select></label></div>
+      <div class="workspace-head"><h1>今天练什么？</h1><label id="courseControl">课程 <select id="courseSelect" aria-label="选择课程"></select></label></div>
       <nav class="workspace-tabs" aria-label="学习工具">
         <button class="ghost active" data-tab="review" aria-pressed="true">练习</button>
         <button class="ghost" data-tab="experiment" aria-pressed="false">实验</button>
@@ -33,14 +33,20 @@
       </nav>
     </section>
     <section class="shell section" id="review" data-panel="review">
+      <div class="review-modes" aria-label="练习入口">
+        <button class="ghost active" data-mode="course" aria-pressed="true">按课程学习</button>
+        <button class="ghost" data-mode="shared" aria-pressed="false">跨课程复习</button>
+      </div>
+      <div class="lesson-context" id="lessonContext"></div>
       <div class="review-controls">
-        <label>范围<select id="topicSelect" aria-label="选择练习范围"></select></label>
+        <label id="lectureControl"><span id="lectureLabel">Lecture</span><select id="lectureSelect" aria-label="选择讲次或学习单元"></select></label>
+        <label><span id="topicLabel">本讲主题</span><select id="topicSelect" aria-label="选择知识主题"></select></label>
         <label>题型<select id="typeSelect" aria-label="选择题型"><option value="ALL">全部题型</option><option value="concept">解释概念</option><option value="formula">写公式</option></select></label>
         <label class="question-control">直接选题<select id="questionSelect" aria-label="直接选择题目"></select></label>
       </div>
       <div class="pool-note"><span id="poolCount"></span><span>先试着写，再看提示</span></div>
       <article class="review-card" id="reviewCard">
-        <div class="review-meta"><span class="pill" id="reviewCourse"></span><span class="pill muted" id="reviewType"></span></div>
+        <div class="review-meta"><span class="pill" id="reviewCourse"></span><span class="pill muted" id="reviewType"></span><span class="pill muted">自编练习</span></div>
         <h3 id="reviewTitle">加载中…</h3><p id="reviewPrompt"></p>
         <div class="math-input-wrap" id="mathInputWrap">
           <math-field id="answerField" math-virtual-keyboard-policy="manual" aria-label="数学公式输入框"></math-field>

@@ -7,7 +7,7 @@ const { chromium, devices } = require('playwright');
 const root = path.resolve(__dirname, '..');
 const base = '/stanford-cs-gym/';
 let failFont = false;
-let revision = 'v2';
+let revision = 'v3';
 const mime = {'.html':'text/html','.js':'application/javascript','.css':'text/css','.webmanifest':'application/manifest+json','.png':'image/png','.svg':'image/svg+xml','.woff2':'font/woff2'};
 const server = http.createServer((req,res) => {
   const pathname = new URL(req.url, 'http://localhost').pathname;
@@ -18,7 +18,7 @@ const server = http.createServer((req,res) => {
   if (failFont && target.endsWith('KaTeX_Size4-Regular.woff2')) { res.writeHead(404).end(); return; }
   if (!fs.existsSync(target) || !fs.statSync(target).isFile()) { res.writeHead(404).end(); return; }
   let body = fs.readFileSync(target);
-  if (revision !== 'v2' && ['sw.js','app.js'].some(f=>target.endsWith(f))) body = Buffer.from(body.toString().replaceAll('v2', revision));
+  if (revision !== 'v3' && ['sw.js','app.js'].some(f=>target.endsWith(f))) body = Buffer.from(body.toString().replaceAll('v3', revision));
   res.writeHead(200, {'Content-Type':mime[path.extname(target)] || 'text/plain','Cache-Control':'no-store'}).end(body);
 });
 
@@ -37,12 +37,45 @@ const server = http.createServer((req,res) => {
     await page.goto(url);
     await page.waitForFunction(()=>document.querySelector('#offlineStatus').textContent === '离线可用 ✓');
     assert.equal(await page.locator('#courseSelect').inputValue(), 'CS231n');
-    assert.equal(await page.locator('#topicSelect').inputValue(), 'lecture2');
+    assert.equal(await page.locator('#lectureSelect').inputValue(), 'lecture2');
+    assert.equal(await page.locator('#topicSelect').inputValue(), 'ALL');
     assert.equal(await page.locator('#questionSelect option').count(),12);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-    const cached = await page.evaluate(async()=> (await (await caches.open('stanford-cs-gym-v2')).keys()).map(r=>r.url));
+    const cached = await page.evaluate(async()=> (await (await caches.open('stanford-cs-gym-v3')).keys()).map(r=>r.url));
     assert.equal(cached.filter(x=>x.endsWith('.woff2')).length,20);
     assert(cached.some(x=>x.endsWith('mathlive.min.js')));
+    assert(!((await page.locator('#topicSelect').textContent()).includes('KL')));
+    assert(!((await page.locator('#questionSelect').textContent()).includes('卷积')));
+    await page.locator('#topicSelect').selectOption('knn');
+    assert.equal(await page.locator('#questionSelect option').count(),2);
+    await page.locator('#topicSelect').selectOption('validation');
+    await page.locator('#typeSelect').selectOption('formula');
+    assert.equal(await page.locator('#questionSelect option').count(),0);
+    assert.equal(await page.locator('#revealBtn').isDisabled(),true);
+    await page.locator('#topicSelect').selectOption('ALL');
+    await page.locator('#typeSelect').selectOption('ALL');
+    await page.locator('#lectureSelect').selectOption('lecture5');
+    assert.equal(await page.locator('#questionSelect option').count(),1);
+    assert.match(await page.locator('#lessonContext').textContent(),/后续/);
+    await page.locator('[data-tab=resources]').click();
+    assert.match(await page.locator('#studyGuide').textContent(),/Lecture 5/);
+    await page.locator('[data-tab=review]').click();
+    await page.locator('#lectureSelect').selectOption('lecture2');
+    await page.locator('[data-mode=shared]').click();
+    assert.equal(await page.locator('#lectureControl').isVisible(),false);
+    assert.equal(await page.locator('#courseControl').isVisible(),false);
+    await page.locator('#topicSelect').selectOption('losses');
+    await page.locator('#questionSelect').selectOption('kl-definition');
+    await page.reload();
+    assert.equal(await page.locator('#topicSelect').inputValue(),'losses');
+    assert.equal(await page.locator('#questionSelect').inputValue(),'kl-definition');
+    await page.locator('[data-mode=course]').click();
+    assert.equal(await page.locator('#lectureSelect').inputValue(),'lecture2');
+    assert.equal(await page.locator('#questionSelect option').count(),12);
+    await page.locator('[data-tab=derivation]').click();
+    assert.equal(await page.locator('#derivationSelect').inputValue(),'classification-loss');
+    assert(!((await page.locator('#derivationLadder').textContent()).includes('KL')));
+    await page.locator('[data-tab=review]').click();
     await page.locator('#typeSelect').selectOption('formula');
     await page.locator('#questionSelect').selectOption('linear-example');
     await page.locator('#revealBtn').click();
@@ -99,15 +132,15 @@ const server = http.createServer((req,res) => {
     await context.setOffline(false);
     await cold.close();
     // Update must wait, then swap the entire release only after explicit refresh.
-    revision='v3';
+    revision='v4';
     await page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();await r.update();});
     await page.locator('#updateApp').waitFor({state:'visible'});
-    assert.equal(await page.evaluate(()=>new Promise(resolve=>{const c=new MessageChannel();c.port1.onmessage=e=>resolve(e.data.version);navigator.serviceWorker.controller.postMessage({type:'GET_VERSION'},[c.port2]);})), 'stanford-cs-gym-v2');
+    assert.equal(await page.evaluate(()=>new Promise(resolve=>{const c=new MessageChannel();c.port1.onmessage=e=>resolve(e.data.version);navigator.serviceWorker.controller.postMessage({type:'GET_VERSION'},[c.port2]);})), 'stanford-cs-gym-v3');
     await page.locator('#updateApp').click();
     await page.waitForFunction(()=>document.querySelector('#offlineStatus').textContent === '离线可用 ✓' && !document.querySelector('#updateApp').offsetParent);
-    assert.deepEqual(await page.evaluate(()=>caches.keys()),['stanford-cs-gym-v3']);
+    assert.deepEqual(await page.evaluate(()=>caches.keys()),['stanford-cs-gym-v4']);
     await context.close();
-    revision='v2'; failFont=true;
+    revision='v3'; failFont=true;
     const failure = await browser.newContext();
     const f = await failure.newPage();
     await f.goto(url);
@@ -117,6 +150,6 @@ const server = http.createServer((req,res) => {
     await failure.close();
     assert.deepEqual(errors,[]);
     assert.deepEqual(external,[]);
-    console.log('PASS: mobile layout, 12 Lecture 2 questions, formula keyboard, all 20 fonts, cold offline reload, resources, numeric lab, scoped atomic update, failed-precache rejection; no runtime CDN requests.');
+    console.log('PASS: course / lecture / topic hierarchy, isolated shared topics, empty-filter state, Lecture 5 guide, legacy URLs, mobile layout, 12 Lecture 2 questions, formula keyboard, all 20 fonts, cold offline reload, resources, numeric lab, scoped atomic update, failed-precache rejection; no runtime CDN requests.');
   } finally { await browser.close(); server.close(); }
 })().catch(e=>{console.error(e);server.close();process.exitCode=1;});

@@ -271,3 +271,38 @@ export const studyGuides = {
     resources:[['CS349D 官方页面 · Mini Serving Engine','https://web.stanford.edu/class/cs349d/','公开项目路线']]
   }
 };
+
+// Official lecture numbers are used only where the existing questions are mapped.
+// Other courses keep an explicitly unnumbered unit until lecture mapping is added.
+const sharedTopics = studySets.filter(s => ['losses','attention','systems','agents'].includes(s.id));
+export const lessonGroups = {
+  CS231n: [
+    {id:'lecture2', title:'Lecture 2 · 图像分类', topics:[
+      {id:'representation', title:'像素与语义', reviewIds:['semantic-gap']},
+      {id:'knn', title:'kNN 与距离', reviewIds:['knn-distance','knn-k']},
+      {id:'validation', title:'训练 / 验证 / 测试', reviewIds:['train-val-test']},
+      {id:'linear', title:'线性分类器', reviewIds:['linear-scores','linear-example','linear-boundary']},
+      {id:'softmax', title:'Softmax 与分类损失', reviewIds:['softmax-definition','softmax-shift','nll','ce-definition','softmax-numeric']}
+    ]},
+    {id:'lecture5', title:'Lecture 5 · 卷积（后续）', later:true, topics:[
+      {id:'convolution', title:'局部结构与参数共享', reviewIds:['conv-translation']}
+    ], guide:{
+      title:'Lecture 5 · 卷积（后续内容）', version:'Spring 2025 · 当前仅备 1 道基础题',
+      plan:'这是后续单元。当前可先完成 Lecture 2–4；这里保留卷积的基础直觉与官方阅读入口。',
+      notes:[['局部模式','边缘等局部模式可以出现在不同位置。'],['参数共享','同一个滤波器在图像不同位置使用同一组权重。']],
+      practice:['解释：为什么同一条边缘不必在每个位置分别学习一套权重？'],
+      resources:[['官方笔记 · 卷积网络','https://cs231n.github.io/convolutional-networks/','局部连接、共享参数与卷积层'],['CS231n 2025 · 官方课表','https://cs231n.stanford.edu/2025/schedule.html','Lecture 5 课程入口']]
+    }}
+  ],
+  ...Object.fromEntries(['CS336','CS329A','CS349D'].map(course => [course, [
+    {id:'foundation', title:'基础专题（暂未按讲次编排）', topics:sharedTopics.filter(s=>s.courses.includes(course))}
+  ]]))
+};
+
+// This short chain stops at the current lecture's loss, leaving KL to the extension.
+derivations.unshift({
+  id:'classification-loss', title:'基础 · 分数 → Softmax → 分类损失',
+  why:'先把本讲的分类链走通：模型给分数，Softmax 给概率，loss 衡量正确类别的概率。',
+  steps:[derivations[0].steps[0],derivations[0].steps[1],derivations[0].steps[3]].map((step,i)=>({...step,title:step.title.replace(/^Step \d+/,`Step ${i+1}`)}))
+});
+derivations.find(d=>d.id==='softmax-to-kl').title = '拓展 · Softmax → CE → KL';

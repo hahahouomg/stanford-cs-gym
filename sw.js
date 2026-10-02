@@ -1,5 +1,5 @@
 const PREFIX = 'stanford-cs-gym-';
-const CACHE = `${PREFIX}v2`;
+const CACHE = `${PREFIX}v3`;
 const CORE = [
   './', './index.html', './assets/styles.css', './assets/app.js',
   './data/curriculum.js', './assets/icon.svg', './assets/apple-touch-icon.png',

@@ -1,10 +1,14 @@
-import { courses, concepts, reviews, derivations, studySets, studyGuides } from '../data/curriculum.js';
+import { courses, concepts, reviews, derivations, studySets, studyGuides, lessonGroups } from '../data/curriculum.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const params = new URL(location.href).searchParams;
 let activeCourse = courses.some(c => c.id === params.get('course')) ? params.get('course') : 'CS231n';
-let activeTopic = params.get('topic') === 'ALL' ? 'ALL' : studySets.some(t => t.id === params.get('topic') && t.courses.includes(activeCourse)) ? params.get('topic') : activeCourse === 'CS231n' ? 'lecture2' : 'ALL';
+const sharedSets = studySets.filter(s => ['losses','attention','systems','agents'].includes(s.id));
+const legacyTopic = !params.has('mode') && !params.has('lecture') ? params.get('topic') : null;
+let activeMode = params.get('mode') === 'shared' || sharedSets.some(s=>s.id===legacyTopic) ? 'shared' : 'course';
+let activeLecture = lessonGroups[activeCourse].some(l=>l.id===params.get('lecture')) ? params.get('lecture') : activeCourse==='CS231n' && legacyTopic==='vision' ? 'lecture5' : lessonGroups[activeCourse][0].id;
+let activeTopic = currentTopics().some(t=>t.id===params.get('topic')) ? params.get('topic') : 'ALL';
 let activeType = ['concept','formula'].includes(params.get('type')) ? params.get('type') : 'ALL';
 let activeTab = 'review';
 let currentReview = null;
@@ -37,7 +41,6 @@ function renderConcepts() {
   $('#conceptGrid').innerHTML = concepts.map(c => `
     <article class="concept-card">
       <h3>${c.title}</h3>
-      <p class="caption">${escapeHtml(c.version)}</p>
       <p>${c.desc}</p>
       <div class="concept-tags">${c.courses.map(x => `<span>${x}</span>`).join('')}</div>
     </article>
@@ -46,7 +49,7 @@ function renderConcepts() {
 
 function updateURL() {
   const url = new URL(location.href);
-  for (const [key, value] of Object.entries({course:activeCourse, topic:activeTopic, type:activeType, tab:activeTab, question:currentReview?.id || ''})) {
+  for (const [key, value] of Object.entries({mode:activeMode, course:activeCourse, lecture:activeMode==='course'?activeLecture:'', topic:activeTopic, type:activeType, tab:activeTab, question:currentReview?.id || ''})) {
     if (value) url.searchParams.set(key, value); else url.searchParams.delete(key);
   }
   history.replaceState(null, '', url);
@@ -60,16 +63,36 @@ function selectTab(tab) {
     b.classList.toggle('active', b.dataset.tab === tab);
     b.setAttribute('aria-pressed', String(b.dataset.tab === tab));
   });
+  $('#courseControl').classList.toggle('hidden', activeTab==='review' && activeMode==='shared');
   globalThis.mathVirtualKeyboard?.hide();
   updateURL();
+}
+
+function currentUnit() {
+  return lessonGroups[activeCourse].find(l=>l.id===activeLecture) || lessonGroups[activeCourse][0];
+}
+
+function currentTopics() {
+  return activeMode==='shared' ? sharedSets : currentUnit().topics;
 }
 
 function renderFilters() {
   $('#courseSelect').innerHTML = courses.map(c => `<option value="${c.id}">${c.id}</option>`).join('');
   $('#courseSelect').value = activeCourse;
-  $('#topicSelect').innerHTML = `<option value="ALL">本课程全部题目</option>` + studySets.filter(t => t.courses.includes(activeCourse)).map(t => `<option value="${t.id}">${escapeHtml(t.title)}</option>`).join('');
+  $('#lectureSelect').innerHTML = lessonGroups[activeCourse].map(l=>`<option value="${l.id}">${escapeHtml(l.title)}</option>`).join('');
+  $('#lectureSelect').value = activeLecture;
+  $('#lectureControl').classList.toggle('hidden', activeMode==='shared');
+  $('#review .review-controls').classList.toggle('shared',activeMode==='shared');
+  $('#lectureLabel').textContent = activeCourse==='CS231n' ? 'Lecture' : '学习单元';
+  $('#topicLabel').textContent = activeMode==='shared' ? '跨课专题' : activeCourse==='CS231n' ? '本讲主题' : '单元主题';
+  const allTitle = activeMode==='shared' ? '全部跨课专题' : activeCourse==='CS231n' ? '本讲全部主题' : '本单元全部主题';
+  $('#topicSelect').innerHTML = `<option value="ALL">${allTitle}</option>` + currentTopics().map(t=>`<option value="${t.id}">${escapeHtml(t.title)}</option>`).join('');
   $('#topicSelect').value = activeTopic;
   $('#typeSelect').value = activeType;
+  $$('[data-mode]').forEach(b=>{ b.classList.toggle('active',b.dataset.mode===activeMode); b.setAttribute('aria-pressed',String(b.dataset.mode===activeMode)); });
+  $('#courseControl').classList.toggle('hidden',activeTab==='review' && activeMode==='shared');
+  const unit = currentUnit();
+  $('#lessonContext').textContent = activeMode==='shared' ? '跨课程知识专题' : `${activeCourse} · ${unit.title}`;
   const items = pool();
   $('#poolCount').textContent = `${items.length} 道题`;
   $('#questionSelect').innerHTML = items.map(r => `<option value="${r.id}">${escapeHtml(r.title)}</option>`).join('');
@@ -77,8 +100,9 @@ function renderFilters() {
 }
 
 function pool() {
-  const set = studySets.find(t => t.id === activeTopic);
-  return reviews.filter(r => r.courses.includes(activeCourse) && (!set || set.reviewIds.includes(r.id)) && (activeType === 'ALL' || r.type === activeType));
+  const topics = activeTopic==='ALL' ? currentTopics() : currentTopics().filter(t=>t.id===activeTopic);
+  const ids = new Set(topics.flatMap(t=>t.reviewIds));
+  return reviews.filter(r => ids.has(r.id) && (activeMode==='shared' || r.courses.includes(activeCourse)) && (activeType==='ALL' || r.type===activeType));
 }
 
 function pickReview(id) {
@@ -87,10 +111,10 @@ function pickReview(id) {
   if (!id && items.length > 1 && currentReview?.id === next.id) next = items[(items.indexOf(next)+1) % items.length];
   currentReview = next || null;
   hintIndex = 0;
-  $('#reviewCourse').textContent = activeCourse;
+  $('#reviewCourse').textContent = activeMode==='shared' ? next?.courses.join(' · ') || '跨课专题' : activeCourse;
   $('#reviewType').textContent = next?.type === 'formula' ? '公式题' : '概念题';
-  $('#reviewTitle').textContent = next?.title || '这个范围暂时没有此题型';
-  $('#reviewPrompt').textContent = next?.prompt || '试试选择“全部题型”或其他范围。';
+  $('#reviewTitle').textContent = next?.title || '这个主题暂时没有此题型';
+  $('#reviewPrompt').textContent = next?.prompt || '试试选择“全部题型”或其他主题。';
   $('#questionSelect').value = next?.id || '';
   for (const id of ['hintBox','answerBox']) { $('#'+id).classList.add('hidden'); $('#'+id).innerHTML = ''; }
   $('#answerField').value = '';
@@ -103,7 +127,7 @@ function pickReview(id) {
 }
 
 function renderStudyGuide() {
-  const g = studyGuides[activeCourse];
+  const g = activeMode==='course' && currentUnit().guide || studyGuides[activeCourse];
   $('#studyGuide').innerHTML = `<div class="section-head"><div><div class="eyebrow">${activeCourse}</div><h2>${escapeHtml(g.title)}</h2><p class="caption">${escapeHtml(g.version)}</p></div></div>
     <p class="study-plan">${escapeHtml(g.plan)}</p>
     <div class="concept-grid">${g.notes.map(([title,desc]) => `<article class="concept-card"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(desc)}</p></article>`).join('')}</div>
@@ -132,6 +156,7 @@ function revealAnswer() {
 
 function renderDerivationOptions() {
   $('#derivationSelect').innerHTML = derivations.map(d => `<option value="${d.id}">${d.title}</option>`).join('');
+  $('#derivationSelect').value = activeDerivation.id;
   $('#derivationSelect').addEventListener('change', e => {
     activeDerivation = derivations.find(d => d.id === e.target.value) || derivations[0];
     deriveStep = 0;
@@ -174,8 +199,19 @@ function keyboardFor(id) {
 function setupEvents() {
   $('#courseSelect').addEventListener('change', e => {
     activeCourse = e.target.value;
-    activeTopic = activeCourse === 'CS231n' ? 'lecture2' : 'ALL';
+    activeMode = 'course';
+    activeLecture = lessonGroups[activeCourse][0].id;
+    activeTopic = 'ALL';
     activeType = 'ALL';
+    renderFilters(); renderStudyGuide(); pickReview(pool()[0]?.id);
+  });
+  $$('[data-mode]').forEach(b=>b.addEventListener('click',()=>{
+    activeMode = b.dataset.mode;
+    activeTopic = 'ALL'; activeType = 'ALL';
+    renderFilters(); renderStudyGuide(); pickReview(pool()[0]?.id);
+  }));
+  $('#lectureSelect').addEventListener('change',e=>{
+    activeLecture = e.target.value; activeTopic = 'ALL'; activeType = 'ALL';
     renderFilters(); renderStudyGuide(); pickReview(pool()[0]?.id);
   });
   $('#topicSelect').addEventListener('change', e => { activeTopic = e.target.value; renderFilters(); pickReview(pool()[0]?.id); });
@@ -270,7 +306,7 @@ function initOffline() {
     const controller = navigator.serviceWorker.controller;
     if (!controller) return;
     const channel = new MessageChannel();
-    channel.port1.onmessage = e => { ready = e.data?.version === 'stanford-cs-gym-v2'; display(); channel.port1.close(); };
+    channel.port1.onmessage = e => { ready = e.data?.version === 'stanford-cs-gym-v3'; display(); channel.port1.close(); };
     controller.postMessage({type:'GET_VERSION'}, [channel.port2]);
   }
   navigator.serviceWorker.addEventListener('controllerchange', () => {

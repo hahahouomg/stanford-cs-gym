@@ -174,3 +174,14 @@ input[type=range] { width:100%; accent-color:var(--accent); min-height:40px; cur
 }
 @media (max-width: 820px) { .top-actions #updateApp:not(.hidden) { display:inline-flex; align-items:center; } }
 .workspace-head label { white-space:nowrap; }
+
+.review-modes { display:flex; gap:8px; margin-bottom:12px; }
+.review-modes .active { border-color:var(--accent-2); color:var(--accent-2); background:rgba(140,184,255,.1); }
+.lesson-context { color:var(--muted); font-size:12px; margin-bottom:14px; line-height:1.6; }
+.review-controls { grid-template-columns:1fr 1fr .65fr; }
+.question-control { grid-column:1/-1; }
+@media (max-width:600px) {
+  .review-controls { grid-template-columns:1fr 1fr; }
+  #lectureControl { grid-column:1/-1; }
+}
+.review-controls.shared { grid-template-columns:1fr .65fr; }
