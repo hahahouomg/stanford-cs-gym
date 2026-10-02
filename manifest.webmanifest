@@ -1,7 +1,7 @@
 {
   "name": "Stanford CS Gym",
   "short_name": "CS Gym",
-  "description": "公式练习、分步推导和直觉实验。",
+  "description": "跨课程知识点、互动讲解、官方作业与复习。",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

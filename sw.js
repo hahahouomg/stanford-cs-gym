@@ -1,7 +1,11 @@
 const PREFIX = 'stanford-cs-gym-';
-const CACHE = `${PREFIX}v3`;
+const CACHE = `${PREFIX}v4`;
 const CORE = [
   './', './index.html', './assets/styles.css', './assets/app.js',
+  './assets/hub.js', './assets/labs.js', './assets/linear-lab.js',
+  './data/catalog.js', './data/knowledge.js',
+  './assets/vendor/three/three.module.min.js', './assets/vendor/three/three.core.min.js',
+  './assets/vendor/three/OrbitControls.js',
   './data/curriculum.js', './assets/icon.svg', './assets/apple-touch-icon.png',
   './assets/icon-192.png', './assets/icon-512.png', './manifest.webmanifest',
   './assets/vendor/mathlive/mathlive.min.js',

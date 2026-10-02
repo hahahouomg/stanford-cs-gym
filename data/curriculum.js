@@ -37,18 +37,6 @@ export const courses = [
   }
 ];
 
-export const concepts = [
-  {id:'probability', title:'Probability & Log', desc:'概率、log、maximum likelihood 是 CE / KL / LM loss 的地基。', courses:['CS231n','CS336','CS329A']},
-  {id:'softmax', title:'Softmax', desc:'把相对分数变成分布；连接分类、attention、sampling 与 policy。', courses:['CS231n','CS336','CS329A']},
-  {id:'ce-kl', title:'Cross Entropy & KL', desc:'训练分布、蒸馏、RL regularization、alignment 都会反复遇到。', courses:['CS231n','CS336','CS329A']},
-  {id:'gradients', title:'Gradients & Backprop', desc:'不只会调用 autograd，要知道信号如何穿过计算图。', courses:['CS231n','CS336']},
-  {id:'attention', title:'Attention', desc:'QKᵀ、scale、softmax、V；也是后续推理系统的核心工作负载。', courses:['CS336','CS349D']},
-  {id:'compute', title:'FLOPs · Memory · Bandwidth', desc:'理解训练和推理为什么常常不是“GPU 算得不够快”。', courses:['CS336','CS349D']},
-  {id:'parallelism', title:'Parallelism', desc:'DP / TP / PP 与通信开销，贯穿大模型训练和 serving。', courses:['CS336','CS349D']},
-  {id:'inference', title:'KV Cache & Serving', desc:'prefill/decode、batching、PagedAttention、cache 与延迟/吞吐。', courses:['CS336','CS349D']},
-  {id:'rl-agents', title:'RL · Search · Agents', desc:'reward、policy、verifier、search、test-time compute 与自我改进。', courses:['CS336','CS329A']}
-];
-
 export const reviews = [
   {
     id:'semantic-gap', courses:['CS231n'], type:'concept', title:'像素接近，为什么不一定是同一种物体？',
@@ -218,87 +206,6 @@ export const derivations = [
     ]
   }
 ];
-// Study sets reference shared questions; do not duplicate question content per course.
-export const studySets = [
-  { id:'lecture2', title:'Lecture 2 · 图像分类基础', courses:['CS231n'], reviewIds:['semantic-gap','knn-distance','knn-k','train-val-test','linear-scores','linear-example','linear-boundary','softmax-definition','softmax-shift','nll','ce-definition','softmax-numeric'] },
-  { id:'losses', title:'Softmax · CE · KL', courses:['CS231n','CS336','CS329A'], reviewIds:['softmax-definition','softmax-shift','nll','ce-definition','kl-definition','ce-kl-relation','softmax-numeric'] },
-  { id:'vision', title:'卷积直觉 · 后续内容', courses:['CS231n'], reviewIds:['conv-translation'] },
-  { id:'attention', title:'Attention · 缩放', courses:['CS336'], reviewIds:['attention-scale'] },
-  { id:'systems', title:'显存 · 带宽 · Serving', courses:['CS336','CS349D'], reviewIds:['arithmetic-intensity','prefill-decode','paged-attention'] },
-  { id:'agents', title:'Verifier · Search', courses:['CS329A'], reviewIds:['verifier-search'] }
-];
-
-// Original learning guidance and short notes. External resources are links, not mirrored pages.
-export const studyGuides = {
-  CS231n: {
-    title:'Lecture 2 · 从像素到分类', version:'入口按 Spring 2025 对齐；其他年份可按主题使用。',
-    plan:'当前先走通 Lecture 2 → Lecture 3 优化 → Lecture 4 反向传播。然后接 CS336 的 Transformer 实现；CS329A 和 CS349D 按项目需要选读。',
-    notes:[
-      ['图像 → 向量','32×32×3 的图像可展平为 3072 维。像素距离衡量外观差异，无法直接衡量物体语义。'],
-      ['kNN → 看邻居','存下训练数据；预测时找距离最近的 k 个样本并投票。k 和距离函数用验证集选。'],
-      ['线性分类 → 算分数','s=Wx+b；W 每行给一个类别打分。分数是相对证据，不是概率。两类分数相等就是分类边界。'],
-      ['Softmax → 概率 → 损失','exp 让分数为正，再归一化。正确类别概率越低，−log(p_correct) 越大。减去共同的 max(logit) 能改善数值稳定性。']
-    ],
-    practice:['看完一个概念后，合上笔记，用一句话解释它解决什么问题。','先手算一次 Wx+b，再用直觉实验改一个 logit，预测并解释概率和 loss 的变化。','本讲对应 Assignment 1 的 kNN；Softmax 可先做前向计算，梯度与训练留到优化/反向传播后。KL 是扩展内容，可以稍后再学。'],
-    resources:[
-      ['Lecture 2 视频 · Stanford Online 2025','https://www.youtube.com/watch?v=2fq9wYslV0A','跟课入口'],
-      ['Lecture 2 官方课件 · 2025','https://cs231n.stanford.edu/slides/2025/lecture_2.pdf','对齐课程与图例'],
-      ['官方笔记 · 图像分类与 kNN','https://cs231n.github.io/classification/','距离、验证集与 k 的选择'],
-      ['官方笔记 · 线性分类','https://cs231n.github.io/linear-classify/','Wx+b、Softmax；含旧版 SVM 扩展'],
-      ['Assignment 1 · 2025','https://cs231n.github.io/assignments2025/assignment1/','先从 knn.ipynb 开始'],
-      ['Python / NumPy 官方教程','https://cs231n.github.io/python-numpy-tutorial/','数组、矩阵乘法、广播']
-    ]
-  },
-  CS336: {
-    title:'从基础桥接到语言模型', version:'公开自学入口 · Spring 2025',
-    plan:'先把矩阵维度、Softmax/CE、反向传播补齐，再推进 tokenizer 与小型 Transformer。以独立实现和小实验作为主线。',
-    notes:[['第一段','Tokenizer → Transformer → optimizer → 训练一个小模型。'],['第二段','用 profiler 测瓶颈，再学习 GPU kernel、并行与资源核算。']],
-    practice:['每个模块先写输入/输出形状，再自己实现。','用 AI 解释报错或概念；先尝试实现，再看提示，保留自己推导的机会。'],
-    resources:[['CS336 2025 · 课表、讲义与全部作业','https://cs336.stanford.edu/spring2025/','实现主线'],['Assignment 1 · 官方代码入口','https://github.com/stanford-cs336/assignment1-basics','tokenizer、模型与训练']]
-  },
-  CS329A: {
-    title:'用可验证任务理解 Agent', version:'Self-Improving AI Agents · Autumn 2025',
-    plan:'先选读 test-time compute 与 verifier，再接工具反馈、规划、记忆与评估。和 CS336 的训练基础并行连接，不必等待四课全部学完。',
-    notes:[['最小闭环','生成候选 → 检查 → 选择/改进；候选变多并不保证结果变好。'],['检验方法','固定任务与预算，对比成功率、成本和失败类型。']],
-    practice:['给一个可执行检查器的任务，比较单次生成和多候选选择。','改候选数或 verifier 质量，每次只改变一个条件。'],
-    resources:[['CS329A 官方课表与论文清单','https://cs329a.stanford.edu/','按主题选读']]
-  },
-  CS349D: {
-    title:'从模型执行到 Serving', version:'AI Inference Infrastructure · Spring 2026',
-    plan:'等你能跑小 Transformer 后，围绕延迟、吞吐与显存做实验，再选读 serving 技术。官方页面的课表尚为空，先用已公开的项目里程碑。',
-    notes:[['资源视角','区分计算、带宽和显存容量；先测量，再优化。'],['项目路线','DP/TP → continuous batching / PagedAttention → context caching / chunked prefill → 进阶特性。']],
-    practice:['固定模型与硬件，改变 batch 或上下文长度，记录延迟和显存。','每加一个 serving 特性，检查结果正确性与成本变化。'],
-    resources:[['CS349D 官方页面 · Mini Serving Engine','https://web.stanford.edu/class/cs349d/','公开项目路线']]
-  }
-};
-
-// Official lecture numbers are used only where the existing questions are mapped.
-// Other courses keep an explicitly unnumbered unit until lecture mapping is added.
-const sharedTopics = studySets.filter(s => ['losses','attention','systems','agents'].includes(s.id));
-export const lessonGroups = {
-  CS231n: [
-    {id:'lecture2', title:'Lecture 2 · 图像分类', topics:[
-      {id:'representation', title:'像素与语义', reviewIds:['semantic-gap']},
-      {id:'knn', title:'kNN 与距离', reviewIds:['knn-distance','knn-k']},
-      {id:'validation', title:'训练 / 验证 / 测试', reviewIds:['train-val-test']},
-      {id:'linear', title:'线性分类器', reviewIds:['linear-scores','linear-example','linear-boundary']},
-      {id:'softmax', title:'Softmax 与分类损失', reviewIds:['softmax-definition','softmax-shift','nll','ce-definition','softmax-numeric']}
-    ]},
-    {id:'lecture5', title:'Lecture 5 · 卷积（后续）', later:true, topics:[
-      {id:'convolution', title:'局部结构与参数共享', reviewIds:['conv-translation']}
-    ], guide:{
-      title:'Lecture 5 · 卷积（后续内容）', version:'Spring 2025 · 当前仅备 1 道基础题',
-      plan:'这是后续单元。当前可先完成 Lecture 2–4；这里保留卷积的基础直觉与官方阅读入口。',
-      notes:[['局部模式','边缘等局部模式可以出现在不同位置。'],['参数共享','同一个滤波器在图像不同位置使用同一组权重。']],
-      practice:['解释：为什么同一条边缘不必在每个位置分别学习一套权重？'],
-      resources:[['官方笔记 · 卷积网络','https://cs231n.github.io/convolutional-networks/','局部连接、共享参数与卷积层'],['CS231n 2025 · 官方课表','https://cs231n.stanford.edu/2025/schedule.html','Lecture 5 课程入口']]
-    }}
-  ],
-  ...Object.fromEntries(['CS336','CS329A','CS349D'].map(course => [course, [
-    {id:'foundation', title:'基础专题（暂未按讲次编排）', topics:sharedTopics.filter(s=>s.courses.includes(course))}
-  ]]))
-};
-
 // This short chain stops at the current lecture's loss, leaving KL to the extension.
 derivations.unshift({
   id:'classification-loss', title:'基础 · 分数 → Softmax → 分类损失',
