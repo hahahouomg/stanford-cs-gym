@@ -109,3 +109,68 @@ select { min-width:220px; }
   .cheatsheet { grid-template-columns:1fr; }
   .footer { flex-direction:column; gap:8px; }
 }
+/* Compact workspace: tools stay one tap away on desktop and phone. */
+.workspace { padding-top:28px; }
+.workspace-head { display:flex; justify-content:space-between; align-items:center; gap:16px; }
+.workspace h1 { font-size:30px; line-height:1.2; margin:0; letter-spacing:-.03em; }
+.workspace-head label { display:flex; align-items:center; gap:10px; color:var(--muted); }
+.workspace-tabs { display:flex; gap:8px; overflow-x:auto; padding:18px 0 4px; }
+.workspace-tabs button { flex-shrink:0; }
+.workspace-tabs .active { background:var(--accent); color:#1a1609; font-weight:800; }
+.section { padding:24px 0; scroll-margin-top:100px; }
+h2 { font-size:clamp(26px,4vw,36px); }
+.review-controls { display:grid; grid-template-columns:1fr .7fr 1.3fr; gap:12px; }
+.review-controls label { display:grid; gap:7px; color:var(--muted); font-size:13px; min-width:0; }
+.review-controls select, #courseSelect { min-width:0; width:100%; }
+select option { color:var(--text); background:#141d31; }
+.pool-note { display:flex; justify-content:space-between; margin:12px 0; font-size:12px; color:var(--muted); }
+.review-card { padding:24px; }
+.review-card h3, .derivation-stage h3 { font-size:26px; }
+.review-meta { margin-bottom:14px; flex-wrap:wrap; }
+.caption, #offlineStatus { color:var(--muted); font-size:12px; line-height:1.6; }
+#offlineStatus { max-width:130px; text-align:right; }
+button { min-height:44px; touch-action:manipulation; }
+button:disabled { opacity:.4; cursor:default; transform:none; }
+button:focus-visible, select:focus-visible, a:focus-visible, summary:focus-visible { outline:2px solid var(--accent-2); outline-offset:3px; }
+.reference-details, .inline-details { border:1px solid var(--line); border-radius:15px; margin-top:18px; padding:16px; }
+summary { cursor:pointer; font-weight:700; min-height:28px; }
+.reference-details p, .inline-details p, .study-plan, .practice-loop { line-height:1.75; color:var(--muted); }
+.reference-details .course-grid, .reference-details .concept-grid { margin-top:16px; }
+.reference-details a, .footer a { color:var(--accent-2); }
+.resource-list { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.resource-list a { display:grid; gap:6px; padding:16px; border:1px solid var(--line); border-radius:12px; text-decoration:none; color:var(--accent-2); }
+.resource-list span { color:var(--muted); font-size:13px; }
+.practice-loop li { padding:4px 0; }
+.ladder-step { width:100%; text-align:left; min-width:0; }
+.experiment-grid { display:grid; grid-template-columns:1fr 1fr; gap:28px; align-items:center; }
+.logit-control { display:block; margin:18px 0; }
+.logit-control output { float:right; font-variant-numeric:tabular-nums; }
+input[type=range] { width:100%; accent-color:var(--accent); min-height:40px; cursor:pointer; }
+.prob-row { display:grid; grid-template-columns:42px 1fr 54px; gap:8px; align-items:center; margin:22px 0; font-size:14px; }
+.prob-row output { text-align:right; font-variant-numeric:tabular-nums; }
+.prob-track { background:rgba(255,255,255,.07); height:18px; border-radius:6px; overflow:hidden; }
+.prob-track div { background:var(--accent-2); height:100%; transition:width .15s; }
+.prob-row:first-child .prob-track div { background:var(--good); }
+.lab-results { padding:16px 0; color:var(--good); line-height:1.6; }
+.shift-control { display:block; color:var(--muted); }
+.derivation-grid > *, .scratch-grid > * { min-width:0; }
+@media (max-width: 600px) {
+  .topbar { padding:12px 16px; padding-top:max(12px, env(safe-area-inset-top)); }
+  .brand { gap:6px; font-size:14px; } .brand-mark { font-size:24px; }
+  .workspace-head { align-items:flex-start; } .workspace-head label { font-size:12px; }
+  .workspace h1 { font-size:24px; white-space:nowrap; }
+  #courseSelect { max-width:125px; }
+  .review-controls { grid-template-columns:1.4fr 1fr; } .question-control { grid-column:1/-1; }
+  .review-card, .derivation-stage, .derivation-sidebar, .scratch-grid { padding:18px; border-radius:18px; }
+  .review-card h3, .derivation-stage h3 { font-size:22px; }
+  .review-actions { gap:7px; } .review-actions button { flex:1; padding:10px; font-size:13px; }
+  .resource-list, .experiment-grid { grid-template-columns:1fr; }
+  .experiment-grid { gap:0; } math-field { font-size:21px; padding:12px; }
+  .top-actions { gap:4px; justify-content:flex-end; } #updateApp { padding:5px; font-size:11px; }
+  .footer { padding-bottom:max(24px, env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior:auto; } button, .prob-track div { transition:none; }
+}
+@media (max-width: 820px) { .top-actions #updateApp:not(.hidden) { display:inline-flex; align-items:center; } }
+.workspace-head label { white-space:nowrap; }

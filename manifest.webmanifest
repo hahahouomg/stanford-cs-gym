@@ -1,7 +1,7 @@
 {
   "name": "Stanford CS Gym",
   "short_name": "CS Gym",
-  "description": "No-login derivation and review gym for Stanford CS self-study.",
+  "description": "公式练习、分步推导和直觉实验。",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -9,10 +9,23 @@
   "theme_color": "#0b1020",
   "icons": [
     {
+      "src": "./assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "./assets/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
-  ]
+  ],
+  "id": "./"
 }

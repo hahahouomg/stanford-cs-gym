@@ -2,94 +2,73 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1020" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="description" content="A tiny, no-login Stanford CS review gym for derivations, formulas and first-principles intuition." />
+  <meta name="apple-mobile-web-app-title" content="CS Gym" />
+  <meta name="description" content="Stanford CS 学习助手：公式练习、分步推导和直觉实验。" />
   <title>Stanford CS Gym · 胖猴复习器</title>
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="./assets/icon.svg" />
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="apple-touch-icon" sizes="180x180" href="./assets/apple-touch-icon.png" />
   <link rel="stylesheet" href="./assets/styles.css" />
-  <script defer src="https://cdn.jsdelivr.net/npm/mathlive"></script>
+  <link rel="stylesheet" href="./assets/vendor/mathlive/mathlive-fonts.css" />
+  <script defer src="./assets/vendor/mathlive/mathlive.min.js"></script>
 </head>
 <body>
-  <div class="noise"></div>
   <header class="topbar">
-    <a class="brand" href="#top" aria-label="Stanford CS Gym home">
-      <span class="brand-mark">🐒</span>
-      <span>
-        <strong>Stanford CS Gym</strong>
-        <small>derive · explain · repeat</small>
-      </span>
-    </a>
-    <nav class="top-actions">
-      <button class="ghost" data-scroll="courses">课程地图</button>
-      <button class="primary" id="shuffleTop">随机复习</button>
-    </nav>
+    <a class="brand" href="#review"><span class="brand-mark">🐒</span><strong>Stanford CS Gym</strong></a>
+    <div class="top-actions"><span id="offlineStatus" role="status">离线准备中…</span><button class="ghost small hidden" id="updateApp">更新可用 · 刷新</button></div>
   </header>
-
-  <main id="top">
-    <section class="hero shell">
-      <div class="hero-copy">
-        <div class="eyebrow">NO LOGIN · NO PROGRESS TRACKING · OPEN & REVIEW</div>
-        <h1>不是“看懂了”，而是<br><span>每次都能重新推出来。</span></h1>
-        <p>给 CS231n / CS336 / CS329A / CS349D 共用的长期知识底座。课程只是入口，真正维护的是跨课程的概念、推导与系统直觉。</p>
-        <div class="hero-actions">
-          <button class="primary big" id="startReview">🎲 抽一道复习题</button>
-          <button class="ghost big" data-scroll="derivation">🧠 从 Softmax 推到 KL</button>
-        </div>
-      </div>
-      <div class="hero-card">
-        <div class="mini-label">TODAY'S RULE</div>
-        <div class="rule">先写，再看提示。<br>先解释“为什么”，再背公式。</div>
-        <div class="formula-chain">
-          <span>logits</span><b>→</b><span>softmax</span><b>→</b><span>NLL</span><b>→</b><span>CE</span><b>→</b><span>KL</span>
-        </div>
-      </div>
+  <main>
+    <section class="shell workspace">
+      <div class="workspace-head"><h1>今天练什么？</h1><label>课程 <select id="courseSelect" aria-label="选择课程"></select></label></div>
+      <nav class="workspace-tabs" aria-label="学习工具">
+        <button class="ghost active" data-tab="review" aria-pressed="true">练习</button>
+        <button class="ghost" data-tab="experiment" aria-pressed="false">实验</button>
+        <button class="ghost" data-tab="derivation" aria-pressed="false">推导</button>
+        <button class="ghost" data-tab="resources" aria-pressed="false">笔记</button>
+        <button class="ghost" data-tab="scratchpad" aria-pressed="false">草稿</button>
+      </nav>
     </section>
-
-    <section class="shell section" id="review">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">RANDOM REVIEW</div>
-          <h2>每次打开，随手抽一道</h2>
-        </div>
-        <div class="filter-row" id="courseFilters"></div>
+    <section class="shell section" id="review" data-panel="review">
+      <div class="review-controls">
+        <label>范围<select id="topicSelect" aria-label="选择练习范围"></select></label>
+        <label>题型<select id="typeSelect" aria-label="选择题型"><option value="ALL">全部题型</option><option value="concept">解释概念</option><option value="formula">写公式</option></select></label>
+        <label class="question-control">直接选题<select id="questionSelect" aria-label="直接选择题目"></select></label>
       </div>
-
+      <div class="pool-note"><span id="poolCount"></span><span>先试着写，再看提示</span></div>
       <article class="review-card" id="reviewCard">
-        <div class="review-meta">
-          <span class="pill" id="reviewCourse">Shared Foundation</span>
-          <span class="pill muted" id="reviewType">Derivation</span>
-        </div>
-        <h3 id="reviewTitle">加载中…</h3>
-        <p id="reviewPrompt"></p>
+        <div class="review-meta"><span class="pill" id="reviewCourse"></span><span class="pill muted" id="reviewType"></span></div>
+        <h3 id="reviewTitle">加载中…</h3><p id="reviewPrompt"></p>
         <div class="math-input-wrap" id="mathInputWrap">
           <math-field id="answerField" math-virtual-keyboard-policy="manual" aria-label="数学公式输入框"></math-field>
-          <div class="math-tools">
-            <button class="ghost small" id="showKeyboard">⌨ 数学键盘</button>
-            <button class="ghost small" id="clearAnswer">清空</button>
-          </div>
+          <div class="math-tools"><button class="ghost small" id="showKeyboard">⌨ 数学键盘</button><button class="ghost small" id="clearAnswer">清空</button></div>
         </div>
-        <textarea class="text-answer hidden" id="textAnswer" rows="4" placeholder="先用自己的话解释，不追求专业术语。"></textarea>
-        <div class="review-actions">
-          <button class="ghost" id="hintBtn">给一点提示</button>
-          <button class="ghost" id="revealBtn">看答案</button>
-          <button class="primary" id="nextBtn">下一题 →</button>
-        </div>
-        <div class="hint-box hidden" id="hintBox"></div>
-        <div class="answer-box hidden" id="answerBox"></div>
+        <textarea class="text-answer hidden" id="textAnswer" rows="4" placeholder="用自己的话解释。" aria-label="概念题回答"></textarea>
+        <div class="review-actions"><button class="ghost" id="hintBtn">提示</button><button class="ghost" id="revealBtn">看答案</button><button class="primary" id="nextBtn">换一道 →</button></div>
+        <div class="hint-box hidden" id="hintBox"></div><div class="answer-box hidden" id="answerBox"></div>
+      </article>
+      <p class="caption">对照答案自行检查；输入内容不会自动判分。</p>
+    </section>
+    <section class="shell section hidden" id="experiment" data-panel="experiment">
+      <div class="section-head"><div><div class="eyebrow">CS231n · Lecture 2</div><h2>分数怎样变成概率？</h2></div></div>
+      <article class="review-card">
+        <p>假设正确答案是猫。先预测：提高猫的分数，概率和损失会怎样变化？拖动滑杆验证。</p>
+        <div class="experiment-grid"><div id="logitControls"></div><div id="probabilityBars" role="img" aria-label="三个类别的预测概率"></div></div>
+        <label class="shift-control">所有分数一起加 <input id="logitShift" type="range" min="-10" max="10" value="0" step="1" /><output id="shiftValue">0</output></label>
+        <div class="lab-results" id="labResults" aria-live="polite"></div>
+        <button class="ghost" id="resetExperiment">重置实验</button>
+        <details class="inline-details"><summary>看公式与机制</summary><p>先对分数取 exp，再除以总和。公共偏移会在分子和分母约掉，所以概率不变。分数最高也可能不够确信；loss 还会检查正确类别的概率。</p><math-field read-only>p_i=\frac{e^{z_i}}{\sum_j e^{z_j}},\quad L=-\log p_{cat}</math-field></details>
+        <p class="caption">再试：把三个分数全设成 0，概率应各为 1/3，loss 约为 1.099。</p>
       </article>
     </section>
-
-    <section class="shell section" id="derivation">
+    <section class="shell section hidden" data-panel="derivation" id="derivation">
       <div class="section-head">
         <div>
           <div class="eyebrow">DERIVATION LAB</div>
-          <h2>把一条公式链亲手走通</h2>
+          <h2>分步推导</h2>
         </div>
         <select id="derivationSelect" aria-label="选择推导"></select>
       </div>
@@ -100,6 +79,7 @@
           <p id="stepPrompt"></p>
           <math-field id="deriveField" math-virtual-keyboard-policy="manual" aria-label="推导输入框"></math-field>
           <div class="review-actions">
+            <button class="ghost" id="deriveKeyboard">⌨ 数学键盘</button>
             <button class="ghost" id="deriveHint">提示</button>
             <button class="ghost" id="deriveReveal">揭晓这一步</button>
             <button class="primary" id="deriveNext">下一步 →</button>
@@ -108,18 +88,18 @@
           <div class="answer-box hidden" id="deriveAnswerBox"></div>
         </div>
         <aside class="derivation-sidebar">
-          <h4>为什么要这样学？</h4>
+          <h4>推导路线</h4>
           <p id="derivationWhy"></p>
           <div class="ladder" id="derivationLadder"></div>
         </aside>
       </div>
     </section>
 
-    <section class="shell section" id="scratchpad">
+    <section class="shell section hidden" data-panel="scratchpad" id="scratchpad">
       <div class="section-head">
         <div>
           <div class="eyebrow">FORMULA SCRATCHPAD</div>
-          <h2>不会 LaTeX 也能写</h2>
+          <h2>公式草稿</h2>
         </div>
       </div>
       <div class="scratch-grid">
@@ -142,37 +122,14 @@
       </div>
     </section>
 
-    <section class="shell section" id="courses">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">COURSE MAP</div>
-          <h2>四门课，共享一套底层能力</h2>
-        </div>
-      </div>
-      <div class="course-grid" id="courseGrid"></div>
-    </section>
-
-    <section class="shell section">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">KNOWLEDGE GRAPH</div>
-          <h2>课程会变，基础节点不会白学</h2>
-        </div>
-      </div>
-      <div class="concept-grid" id="conceptGrid"></div>
+    <section class="shell section hidden" id="resources" data-panel="resources">
+      <div id="studyGuide"></div>
+      <details class="reference-details"><summary>四门课的路线与官方入口</summary><div class="course-grid" id="courseGrid"></div></details>
+      <details class="reference-details"><summary>跨课程概念地图</summary><div class="concept-grid" id="conceptGrid"></div></details>
+      <details class="reference-details"><summary>怎么用 · 手机离线</summary><p>先尝试回答 → 逐级提示 → 对照答案 → 改一个条件再解释。隔天打开，再从记忆写一遍。课程资料链接和视频需要网络，本站题目、笔记、实验与公式键盘可离线使用。</p><p>首次联网打开，等右上角显示“离线可用”。iPhone：Safari → 分享 → 添加到主屏幕。更新时点“更新可用 · 刷新”。此操作会清空当前草稿。</p><p>无需登录，不记录学习进度。课程和题目选择可复制当前网址分享。</p><a href="https://doi.org/10.1126/science.1152408" target="_blank" rel="noreferrer">检索练习研究 · Karpicke &amp; Roediger, 2008 ↗</a></details>
     </section>
   </main>
-
-  <footer class="shell footer">
-    <span>🐒 Stanford CS Gym</span>
-    <span>Static · public · no account · no stored progress</span>
-  </footer>
-
+  <footer class="shell footer"><span>🐒 先理解，再推导</span><a href="https://github.com/hahahouomg/stanford-cs-gym" target="_blank" rel="noreferrer">GitHub ↗</a></footer>
   <script type="module" src="./assets/app.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
-    }
-  </script>
 </body>
 </html>

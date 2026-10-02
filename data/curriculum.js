@@ -2,7 +2,8 @@ export const courses = [
   {
     id: 'CS231n',
     title: 'Deep Learning for Computer Vision',
-    url: 'https://cs231n.stanford.edu/',
+    url: 'https://cs231n.stanford.edu/2025/schedule.html',
+    version: 'Spring 2025 · 当前从 Lecture 2 开始',
     focus: '从分类、优化与反向传播，到现代视觉表示与视觉模型。',
     topics: ['linear classifiers', 'optimization', 'backprop', 'CNNs', 'vision transformers', 'detection / segmentation'],
     color: 'rgba(101, 145, 255, .9)'
@@ -10,7 +11,8 @@ export const courses = [
   {
     id: 'CS336',
     title: 'Language Modeling from Scratch',
-    url: 'https://cs336.stanford.edu/',
+    url: 'https://cs336.stanford.edu/spring2025/',
+    version: 'Spring 2025 · 公开自学资料',
     focus: '从 tokenizer 和 Transformer 一路做到训练、系统、数据、评测与 post-training。',
     topics: ['tokenization', 'Transformer', 'attention / MoE', 'GPU & Triton', 'parallelism', 'scaling', 'data', 'SFT / RL'],
     color: 'rgba(255, 207, 84, .95)'
@@ -18,7 +20,8 @@ export const courses = [
   {
     id: 'CS329A',
     title: 'Self-Improving AI Agents',
-    url: 'https://bulletin.stanford.edu/courses/2263721',
+    url: 'https://cs329a.stanford.edu/',
+    version: 'Autumn 2025 · Self-Improving AI Agents',
     focus: '围绕自我改进、verifier、test-time compute、工具调用、规划与 agent evaluation。',
     topics: ['verifiers', 'test-time compute', 'search', 'tools / retrieval', 'planning', 'agent evaluation', 'robotics'],
     color: 'rgba(119, 215, 170, .95)'
@@ -27,6 +30,7 @@ export const courses = [
     id: 'CS349D',
     title: 'AI Inference Infrastructure',
     url: 'https://web.stanford.edu/class/cs349d/',
+    version: 'Spring 2026 · 公开页面的 schedule 尚为空',
     focus: '理解 LLM serving 的吞吐、延迟、显存与分布式权衡，并亲手构建 serving engine。',
     topics: ['TP / DP', 'continuous batching', 'PagedAttention', 'KV cache', 'chunked prefill', 'speculative decoding', 'disaggregation'],
     color: 'rgba(255, 143, 157, .95)'
@@ -46,6 +50,62 @@ export const concepts = [
 ];
 
 export const reviews = [
+  {
+    id:'semantic-gap', courses:['CS231n'], type:'concept', title:'像素接近，为什么不一定是同一种物体？',
+    prompt:'同一只猫换了背景或挪了位置，像素差异可能很大。为什么直接比较像素的 kNN 容易出错？',
+    answerText:'像素距离比较的是亮度与位置，不直接比较“猫”的语义。背景、光照或平移都能改变大量像素，所以距离小不一定同类，距离大也不一定异类。',
+    hints:['想象把猫向右平移一个像素。','kNN 的判断依赖你给它的距离；原始像素距离并不自带物体语义。'],
+    why:'先理解表示与距离的限制，再理解为什么需要学习视觉特征。'
+  },
+  {
+    id:'knn-distance', courses:['CS231n'], type:'formula', title:'写出 L1 和 L2 距离',
+    prompt:'两个图像展开为向量 x 和 y。分别写出 L1 距离和 L2 距离（不是 L2 距离平方）。',
+    answer:'d_1(x,y)=\\sum_i|x_i-y_i|,\\quad d_2(x,y)=\\sqrt{\\sum_i(x_i-y_i)^2}',
+    hints:['L1 把每个维度的绝对差加起来。','L2 先平方、求和，再开根号。'],
+    why:'例如 x=(1,2), y=(4,6)：L1=7，L2=5；改变距离可能改变最近邻。'
+  },
+  {
+    id:'knn-k', courses:['CS231n'], type:'concept', title:'kNN 的 k 应该怎么选？',
+    prompt:'最近三个训练样本的类别依次是 猫、狗、狗。k=1 和 k=3 各会预测什么？为什么不能在测试集上挑 k？',
+    answerText:'k=1 预测猫；这里采用等权多数投票，k=3 预测狗。k 改变对局部样本和噪声的敏感程度，用验证集选 k，再用未参与调参的测试集做最终评估。没有“k 越大越好”的保证。',
+    hints:['看最近的 k 个样本，做多数投票。','反复根据测试结果调参，测试集就参与了模型选择。'],
+    why:'把超参数选择与最终泛化评估分开，避免得到虚高的测试表现。'
+  },
+  {
+    id:'train-val-test', courses:['CS231n'], type:'concept', title:'训练集、验证集、测试集各做什么？',
+    prompt:'用一句话分别解释三者，并说明“反复看测试分数改模型”的问题。',
+    answerText:'训练集用于拟合参数；验证集用于选择超参数和模型；测试集用于模型选择结束后的最终评估。反复根据测试分数修改模型会引入测试信息，削弱评估的独立性。',
+    hints:['区分“学参数”“选方案”“最后验收”。'],
+    why:'这套实验纪律也适用于 VLM、Agent 和你的自有数据集。'
+  },
+  {
+    id:'linear-scores', courses:['CS231n'], type:'formula', title:'线性分类器的公式与维度',
+    prompt:'把 CIFAR-10 图像展平成列向量 x∈R^3072，输出 10 个类别分数。写出 s，并标明 W 和 b 的维度。',
+    answer:'s=Wx+b,\\quad W\\in\\mathbb{R}^{10\\times3072},\\quad b\\in\\mathbb{R}^{10}',
+    hints:['32×32×3=3072；矩阵乘法的内维要相等。','每个类别对应 W 的一行。'],
+    why:'W 的一行可以看成一个类别的模板；偏置调整它的基础分数。'
+  },
+  {
+    id:'linear-example', courses:['CS231n'], type:'formula', title:'亲手算一次 Wx+b',
+    prompt:'x=(2,1)ᵀ，W 的两行分别为 (1,−1) 和 (0,2)，b=(0,1)ᵀ。写出分数 s；按最大分数选类别，会选第几个？',
+    answer:'s=\\begin{pmatrix}1\\\\3\\end{pmatrix},\\quad\\hat{y}=2',
+    hints:['第一行：1×2−1×1+0。','第二行：0×2+2×1+1。'],
+    why:'这里类别编号从 1 开始。线性分数可以为负，也不要求和为 1。'
+  },
+  {
+    id:'linear-boundary', courses:['CS231n'], type:'concept', title:'线性分类器的边界为什么是一条直线？',
+    prompt:'在二维输入中，两个类别的分数相等时形成分类边界。解释这条边界为什么是直线，以及它对 XOR 类数据的限制。',
+    answerText:'两类分数相等给出 (w₁−w₂)·x+(b₁−b₂)=0，二维中是直线，高维中是超平面。原始特征上的单个线性边界不能分开 XOR 的交错类别，需要非线性特征或多层网络。',
+    hints:['把 s₁=s₂ 写出来，再把两边移到一起。'],
+    why:'这是从线性模型走向神经网络的具体原因。'
+  },
+  {
+    id:'softmax-numeric', courses:['CS231n','CS336'], type:'formula', title:'分数全相等时，概率与损失是多少？',
+    prompt:'三个类别的 logits 都为 0，正确类别为第 1 类。写出三个 softmax 概率和单样本 NLL（自然对数）。',
+    answer:'p_1=p_2=p_3=\\frac{1}{3},\\quad L=\\log3\\approx1.099',
+    hints:['exp(0)=1。','loss=−log(正确类别概率)。'],
+    why:'这也是检查随机初始分类器 loss 尺度的一个基准。'
+  },
   {
     id:'softmax-definition', courses:['CS231n','CS336'], type:'formula', title:'写出 Softmax',
     prompt:'对第 i 个 logit zᵢ，写出它对应的 softmax 概率 pᵢ。先不要看提示。',
@@ -158,3 +218,56 @@ export const derivations = [
     ]
   }
 ];
+// Study sets reference shared questions; do not duplicate question content per course.
+export const studySets = [
+  { id:'lecture2', title:'Lecture 2 · 图像分类基础', courses:['CS231n'], reviewIds:['semantic-gap','knn-distance','knn-k','train-val-test','linear-scores','linear-example','linear-boundary','softmax-definition','softmax-shift','nll','ce-definition','softmax-numeric'] },
+  { id:'losses', title:'Softmax · CE · KL', courses:['CS231n','CS336','CS329A'], reviewIds:['softmax-definition','softmax-shift','nll','ce-definition','kl-definition','ce-kl-relation','softmax-numeric'] },
+  { id:'vision', title:'卷积直觉 · 后续内容', courses:['CS231n'], reviewIds:['conv-translation'] },
+  { id:'attention', title:'Attention · 缩放', courses:['CS336'], reviewIds:['attention-scale'] },
+  { id:'systems', title:'显存 · 带宽 · Serving', courses:['CS336','CS349D'], reviewIds:['arithmetic-intensity','prefill-decode','paged-attention'] },
+  { id:'agents', title:'Verifier · Search', courses:['CS329A'], reviewIds:['verifier-search'] }
+];
+
+// Original learning guidance and short notes. External resources are links, not mirrored pages.
+export const studyGuides = {
+  CS231n: {
+    title:'Lecture 2 · 从像素到分类', version:'入口按 Spring 2025 对齐；其他年份可按主题使用。',
+    plan:'当前先走通 Lecture 2 → Lecture 3 优化 → Lecture 4 反向传播。然后接 CS336 的 Transformer 实现；CS329A 和 CS349D 按项目需要选读。',
+    notes:[
+      ['图像 → 向量','32×32×3 的图像可展平为 3072 维。像素距离衡量外观差异，无法直接衡量物体语义。'],
+      ['kNN → 看邻居','存下训练数据；预测时找距离最近的 k 个样本并投票。k 和距离函数用验证集选。'],
+      ['线性分类 → 算分数','s=Wx+b；W 每行给一个类别打分。分数是相对证据，不是概率。两类分数相等就是分类边界。'],
+      ['Softmax → 概率 → 损失','exp 让分数为正，再归一化。正确类别概率越低，−log(p_correct) 越大。减去共同的 max(logit) 能改善数值稳定性。']
+    ],
+    practice:['看完一个概念后，合上笔记，用一句话解释它解决什么问题。','先手算一次 Wx+b，再用直觉实验改一个 logit，预测并解释概率和 loss 的变化。','本讲对应 Assignment 1 的 kNN；Softmax 可先做前向计算，梯度与训练留到优化/反向传播后。KL 是扩展内容，可以稍后再学。'],
+    resources:[
+      ['Lecture 2 视频 · Stanford Online 2025','https://www.youtube.com/watch?v=2fq9wYslV0A','跟课入口'],
+      ['Lecture 2 官方课件 · 2025','https://cs231n.stanford.edu/slides/2025/lecture_2.pdf','对齐课程与图例'],
+      ['官方笔记 · 图像分类与 kNN','https://cs231n.github.io/classification/','距离、验证集与 k 的选择'],
+      ['官方笔记 · 线性分类','https://cs231n.github.io/linear-classify/','Wx+b、Softmax；含旧版 SVM 扩展'],
+      ['Assignment 1 · 2025','https://cs231n.github.io/assignments2025/assignment1/','先从 knn.ipynb 开始'],
+      ['Python / NumPy 官方教程','https://cs231n.github.io/python-numpy-tutorial/','数组、矩阵乘法、广播']
+    ]
+  },
+  CS336: {
+    title:'从基础桥接到语言模型', version:'公开自学入口 · Spring 2025',
+    plan:'先把矩阵维度、Softmax/CE、反向传播补齐，再推进 tokenizer 与小型 Transformer。以独立实现和小实验作为主线。',
+    notes:[['第一段','Tokenizer → Transformer → optimizer → 训练一个小模型。'],['第二段','用 profiler 测瓶颈，再学习 GPU kernel、并行与资源核算。']],
+    practice:['每个模块先写输入/输出形状，再自己实现。','用 AI 解释报错或概念；先尝试实现，再看提示，保留自己推导的机会。'],
+    resources:[['CS336 2025 · 课表、讲义与全部作业','https://cs336.stanford.edu/spring2025/','实现主线'],['Assignment 1 · 官方代码入口','https://github.com/stanford-cs336/assignment1-basics','tokenizer、模型与训练']]
+  },
+  CS329A: {
+    title:'用可验证任务理解 Agent', version:'Self-Improving AI Agents · Autumn 2025',
+    plan:'先选读 test-time compute 与 verifier，再接工具反馈、规划、记忆与评估。和 CS336 的训练基础并行连接，不必等待四课全部学完。',
+    notes:[['最小闭环','生成候选 → 检查 → 选择/改进；候选变多并不保证结果变好。'],['检验方法','固定任务与预算，对比成功率、成本和失败类型。']],
+    practice:['给一个可执行检查器的任务，比较单次生成和多候选选择。','改候选数或 verifier 质量，每次只改变一个条件。'],
+    resources:[['CS329A 官方课表与论文清单','https://cs329a.stanford.edu/','按主题选读']]
+  },
+  CS349D: {
+    title:'从模型执行到 Serving', version:'AI Inference Infrastructure · Spring 2026',
+    plan:'等你能跑小 Transformer 后，围绕延迟、吞吐与显存做实验，再选读 serving 技术。官方页面的课表尚为空，先用已公开的项目里程碑。',
+    notes:[['资源视角','区分计算、带宽和显存容量；先测量，再优化。'],['项目路线','DP/TP → continuous batching / PagedAttention → context caching / chunked prefill → 进阶特性。']],
+    practice:['固定模型与硬件，改变 batch 或上下文长度，记录延迟和显存。','每加一个 serving 特性，检查结果正确性与成本变化。'],
+    resources:[['CS349D 官方页面 · Mini Serving Engine','https://web.stanford.edu/class/cs349d/','公开项目路线']]
+  }
+};
