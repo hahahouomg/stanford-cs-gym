@@ -158,16 +158,12 @@ function initMathLive() {
     if (!mf) return;
     mf.mathVirtualKeyboardPolicy = 'manual';
     mf.smartFence = true;
+    mf.insertAdjacentHTML('afterend', `<details class="math-input-help" id="${mf.id}Help"><summary>怎么输入公式？</summary><p>点输入框右侧的键盘图标可打开数学键盘。电脑上也可以这样按：</p><dl><dt><kbd>_</kbd> / <kbd>^</kbd></dt><dd>进入下标 / 上标，例如 x_i、e^x。</dd><dt><kbd>→</kbd></dt><dd>退出一层下标或上标；有两层就按两次。</dd><dt><kbd>\\frac</kbd> + <kbd>Enter</kbd></dt><dd>建立分数，先填分子，再用 ↓ 移到分母。</dd><dt><kbd>\\sum</kbd> + <kbd>Enter</kbd></dt><dd>插入求和符号 Σ；随后可用 _ 加下标。</dd></dl><p>完整 LaTeX 可直接粘贴，例如 <code>\\frac{a}{b}</code>。不需要加 $ 或 $$。</p></details>`);
+    mf.setAttribute('aria-describedby', `${mf.id}Help`);
     mf.addEventListener('focusin', () => {
       if (globalThis.mathVirtualKeyboard) globalThis.mathVirtualKeyboard.layouts = ['numeric','symbols','alphabetic','greek'];
     });
   });
-}
-
-function keyboardFor(id) {
-  const mf = document.getElementById(id);
-  mf?.focus();
-  if (globalThis.mathVirtualKeyboard) globalThis.mathVirtualKeyboard.show();
 }
 
 function setupEvents() {
@@ -196,9 +192,7 @@ function setupEvents() {
   $('#nextBtn').addEventListener('click', () => pickReview());
   $('#hintBtn').addEventListener('click', showHint);
   $('#revealBtn').addEventListener('click', revealAnswer);
-  $('#showKeyboard').addEventListener('click', () => keyboardFor('answerField'));
   $('#clearAnswer').addEventListener('click', () => $('#answerField').value = '');
-  $('#deriveKeyboard').addEventListener('click', () => keyboardFor('deriveField'));
   $('#deriveHint').addEventListener('click', () => {
     const step = activeDerivation.steps[deriveStep];
     $('#deriveHintBox').classList.remove('hidden');
@@ -213,7 +207,6 @@ function setupEvents() {
     deriveStep = (deriveStep + 1) % activeDerivation.steps.length;
     renderDerivation();
   });
-  $('#scratchKeyboard').addEventListener('click', () => keyboardFor('scratchField'));
   $('#clearScratch').addEventListener('click', () => $('#scratchField').value = '');
   $('#copyLatex').addEventListener('click', async () => {
     const value = $('#scratchField').value || '';
@@ -273,7 +266,7 @@ function initOffline() {
     const controller = navigator.serviceWorker.controller;
     if (!controller) return;
     const channel = new MessageChannel();
-    channel.port1.onmessage = e => { ready = e.data?.version === 'stanford-cs-gym-v4'; display(); channel.port1.close(); };
+    channel.port1.onmessage = e => { ready = e.data?.version === 'stanford-cs-gym-v5'; display(); channel.port1.close(); };
     controller.postMessage({type:'GET_VERSION'}, [channel.port2]);
   }
   navigator.serviceWorker.addEventListener('controllerchange', () => {

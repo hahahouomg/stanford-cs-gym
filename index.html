@@ -54,7 +54,7 @@
         <h3 id="reviewTitle">加载中…</h3><p id="reviewPrompt"></p>
         <div class="math-input-wrap" id="mathInputWrap">
           <math-field id="answerField" math-virtual-keyboard-policy="manual" aria-label="数学公式输入框"></math-field>
-          <div class="math-tools"><button class="ghost small" id="showKeyboard">⌨ 数学键盘</button><button class="ghost small" id="clearAnswer">清空</button></div>
+          <div class="math-tools"><button class="ghost small" id="clearAnswer">清空</button></div>
         </div>
         <textarea class="text-answer hidden" id="textAnswer" rows="4" placeholder="用自己的话解释。" aria-label="概念题回答"></textarea>
         <div class="review-actions"><button class="ghost" id="hintBtn">提示</button><button class="ghost" id="revealBtn">看答案</button><button class="primary" id="nextBtn">换一道 →</button></div>
@@ -77,7 +77,6 @@
           <p id="stepPrompt"></p>
           <math-field id="deriveField" math-virtual-keyboard-policy="manual" aria-label="推导输入框"></math-field>
           <div class="review-actions">
-            <button class="ghost" id="deriveKeyboard">⌨ 数学键盘</button>
             <button class="ghost" id="deriveHint">提示</button>
             <button class="ghost" id="deriveReveal">揭晓这一步</button>
             <button class="primary" id="deriveNext">下一步 →</button>
@@ -104,18 +103,9 @@
         <div>
           <math-field id="scratchField" math-virtual-keyboard-policy="manual" aria-label="自由公式草稿"></math-field>
           <div class="review-actions">
-            <button class="primary" id="scratchKeyboard">⌨ 打开公式键盘</button>
             <button class="ghost" id="copyLatex">复制 LaTeX</button>
             <button class="ghost" id="clearScratch">清空</button>
           </div>
-        </div>
-        <div class="cheatsheet">
-          <div><kbd>_</kbd><span>下标：p_i</span></div>
-          <div><kbd>^</kbd><span>上标：e^x</span></div>
-          <div><kbd>/</kbd><span>选中后可做分数，或点键盘分数模板</span></div>
-          <div><kbd>\sum</kbd><span>求和 Σ</span></div>
-          <div><kbd>\log</kbd><span>对数 log</span></div>
-          <div><kbd>\theta</kbd><span>希腊字母 θ</span></div>
         </div>
       </div>
     </section>

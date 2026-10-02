@@ -5,7 +5,7 @@ const path=require('node:path');
 const http=require('node:http');
 const {chromium,devices}=require('playwright');
 const root=path.resolve(__dirname,'..'),base='/stanford-cs-gym/';
-let failFile='',revision='v4';
+let failFile='',revision='v5';
 const mime={'.html':'text/html','.js':'application/javascript','.css':'text/css','.webmanifest':'application/manifest+json','.png':'image/png','.svg':'image/svg+xml','.woff2':'font/woff2'};
 const server=http.createServer((req,res)=>{
   const pathname=new URL(req.url,'http://localhost').pathname;
@@ -16,11 +16,24 @@ const server=http.createServer((req,res)=>{
   if(failFile&&target.endsWith(failFile)){res.writeHead(404).end();return;}
   if(!fs.existsSync(target)||!fs.statSync(target).isFile()){res.writeHead(404).end();return;}
   let body=fs.readFileSync(target);
-  if(revision!=='v4'&&['sw.js','app.js'].some(f=>target.endsWith(f)))body=Buffer.from(body.toString().replaceAll('v4',revision));
+  if(revision!=='v5'&&['sw.js','app.js'].some(f=>target.endsWith(f)))body=Buffer.from(body.toString().replaceAll('v5',revision));
   res.writeHead(200,{'Content-Type':mime[path.extname(target)]||'text/plain','Cache-Control':'no-store'}).end(body);
 });
 const set=async(page,id,value)=>page.locator('#'+id).evaluate((e,v)=>{e.value=v;e.dispatchEvent(new Event('input'));},String(value));
 const openNode=async(page,id)=>{await page.locator('[data-tab=library]').click();await page.locator('[data-browse=shared]').click();await page.locator(`[data-node="${id}"]`).click();};
+// Real keystrokes: nested subscripts must be exited before moving to the denominator.
+const typeSoftmax=async(page,id)=>{
+  const field=page.locator('#'+id);await field.evaluate(e=>e.value='');await field.focus();
+  await page.keyboard.type('p_i');await page.keyboard.press('ArrowRight');await page.keyboard.type('=\\frac');await page.keyboard.press('Enter');
+  await page.keyboard.type('e^z_i');await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowDown');
+  await page.keyboard.type('\\sum');await page.keyboard.press('Enter');await page.keyboard.type('_j');await page.keyboard.press('ArrowRight');await page.keyboard.type('e^z_j');
+  assert.equal(await field.evaluate(e=>e.value),String.raw`p_{i}=\frac{e^{z_{i}}}{\sum_{j}e^{z_{j}}}`);
+};
+const toggleKeyboard=async(page,id)=>{
+  const toggle=page.locator('#'+id).locator('[part="virtual-keyboard-toggle"]');assert(await toggle.isVisible());
+  await toggle.click();assert(await page.evaluate(()=>mathVirtualKeyboard.visible));
+  await toggle.click();assert(!(await page.evaluate(()=>mathVirtualKeyboard.visible)));
+};
 (async()=>{
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   const origin=`http://127.0.0.1:${server.address().port}`,url=origin+base;
@@ -79,7 +92,7 @@ const openNode=async(page,id)=>{await page.locator('[data-tab=library]').click()
     await openNode(page,'optimization');await set(page,'learningRate',1);await page.locator('#gradientStep').click();assert.match(await page.locator('#gradientResult').textContent(),/w = 0.000/);
     await set(page,'learningRate',2.2);await page.locator('#gradientStep').click();assert.match(await page.locator('#gradientResult').textContent(),/w = -3.600/);
     await openNode(page,'convolution');assert.match(await page.locator('#convResult').textContent(),/= 3/);await set(page,'windowPosition',2);assert.match(await page.locator('#convResult').textContent(),/= 0/);
-    const cached=await page.evaluate(async()=>(await(await caches.open('stanford-cs-gym-v4')).keys()).map(r=>r.url));
+    const cached=await page.evaluate(async()=>(await(await caches.open('stanford-cs-gym-v5')).keys()).map(r=>r.url));
     assert.equal(cached.filter(x=>x.endsWith('.woff2')).length,20);
     for(const file of ['three.core.min.js','three.module.min.js','OrbitControls.js','linear-lab.js','knowledge.js','catalog.js'])assert(cached.some(u=>u.endsWith(file)));
     await context.setOffline(true);
@@ -91,10 +104,15 @@ const openNode=async(page,id)=>{await page.locator('[data-tab=library]').click()
     await cold.waitForFunction(()=>document.querySelector('#offlineStatus').textContent.includes('离线模式'));
     assert(await cold.evaluate(async()=>{try{await fetch('./uncached-offline-probe');return false;}catch{return true;}}));
     await cold.locator('#nodePractice').click();await cold.locator('#questionSelect').selectOption('linear-scores');
-    await cold.locator('#showKeyboard').click();assert(await cold.evaluate(()=>mathVirtualKeyboard.visible));
-    await cold.locator('#answerField').evaluate(e=>e.insert(String.raw`\frac{x_i}{2}+\sum_j e^{z_j}`));
-    assert.match(await cold.locator('#answerField').evaluate(e=>e.value),/frac/);await cold.evaluate(()=>mathVirtualKeyboard.hide());
+    assert.equal(await cold.locator('#showKeyboard,#deriveKeyboard,#scratchKeyboard').count(),0);
+    await toggleKeyboard(cold,'answerField');await typeSoftmax(cold,'answerField');
     await cold.locator('#hintBtn').click();await cold.locator('#revealBtn').click();assert(await cold.locator('#answerBox math-field').first().evaluate(e=>!!e.shadowRoot));
+    await cold.locator('[data-tab=derivation]').click();await cold.locator('#derivationSelect').selectOption('classification-loss');await cold.locator('[data-step="0"]').click();
+    await toggleKeyboard(cold,'deriveField');await typeSoftmax(cold,'deriveField');
+    await cold.locator('#deriveFieldHelp summary').click();assert.match(await cold.locator('#deriveFieldHelp').textContent(),/\\frac/);assert.equal(await cold.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    await cold.screenshot({path:'/tmp/stanford-softmax-mobile.png',fullPage:true});
+    await cold.locator('[data-tab=scratchpad]').click();await toggleKeyboard(cold,'scratchField');await typeSoftmax(cold,'scratchField');
+    await cold.screenshot({path:'/tmp/stanford-scratch-mobile.png',fullPage:true});
     const fontResults=await cold.evaluate(async(urls)=>Promise.all(urls.map(async u=>{const r=await fetch(u);return r.ok&&(await r.arrayBuffer()).byteLength>0;})),cached.filter(x=>x.endsWith('.woff2')));assert(fontResults.every(Boolean));
     await cold.evaluate(()=>document.fonts.ready);assert(await cold.evaluate(()=>document.fonts.check('20px KaTeX_Main')));
     await openNode(cold,'softmax');for(const id of ['z0','z1','z2'])await set(cold,id,0);assert.match(await cold.locator('#labResults').textContent(),/loss = 1.099/);
@@ -102,11 +120,11 @@ const openNode=async(page,id)=>{await page.locator('[data-tab=library]').click()
     await cold.locator('[data-tab=resources]').click();assert.match(await cold.locator('#resources').textContent(),/自编题/);
     await context.setOffline(false);await cold.close();
     // Explicit activation swaps the entire release; broken installs cannot advertise readiness.
-    revision='v5';await page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();await r.update();});await page.locator('#updateApp').waitFor({state:'visible'});
-    assert.equal(await page.evaluate(()=>new Promise(resolve=>{const c=new MessageChannel();c.port1.onmessage=e=>resolve(e.data.version);navigator.serviceWorker.controller.postMessage({type:'GET_VERSION'},[c.port2]);})),'stanford-cs-gym-v4');
+    revision='v6';await page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();await r.update();});await page.locator('#updateApp').waitFor({state:'visible'});
+    assert.equal(await page.evaluate(()=>new Promise(resolve=>{const c=new MessageChannel();c.port1.onmessage=e=>resolve(e.data.version);navigator.serviceWorker.controller.postMessage({type:'GET_VERSION'},[c.port2]);})),'stanford-cs-gym-v5');
     await page.locator('#updateApp').click();await page.waitForFunction(()=>document.querySelector('#offlineStatus').textContent==='离线可用 ✓'&&!document.querySelector('#updateApp').offsetParent);
-    assert.deepEqual(await page.evaluate(()=>caches.keys()),['stanford-cs-gym-v5']);await context.close();
-    revision='v4';
+    assert.deepEqual(await page.evaluate(()=>caches.keys()),['stanford-cs-gym-v6']);await context.close();
+    revision='v5';
     for(const missing of ['KaTeX_Size4-Regular.woff2','three.core.min.js']){
       failFile=missing;const failure=await browser.newContext();const f=await failure.newPage();await f.goto(url);
       await f.waitForFunction(()=>document.querySelector('#offlineStatus').textContent.includes('失败'));
@@ -115,7 +133,16 @@ const openNode=async(page,id)=>{await page.locator('[data-tab=library]').click()
     failFile='';assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
     const desktop=await browser.newContext({viewport:{width:1440,height:1000}}),wide=await desktop.newPage();await wide.goto(url);await wide.locator('.knowledge-card').first().waitFor();
     await wide.screenshot({path:'/tmp/stanford-hub-desktop.png',fullPage:true});
+    await wide.locator('[data-tab=derivation]').click();await typeSoftmax(wide,'deriveField');
+    const field=wide.locator('#deriveField');await field.evaluate(e=>e.value='');await field.focus();await wide.keyboard.type('\\frac');await wide.keyboard.press('Enter');await wide.keyboard.type('a');
+    await wide.waitForFunction(()=>document.querySelector('#deriveField').shadowRoot.querySelector('.ML__contains-highlight'));
+    const colors=await field.evaluate(e=>{const s=getComputedStyle(e.shadowRoot.querySelector('.ML__contains-highlight'));return {foreground:s.color,background:s.backgroundColor};});
+    assert.equal(colors.foreground,'rgb(244, 246, 251)');assert.equal(colors.background,'rgba(140, 184, 255, 0.1)');
+    await field.screenshot({path:'/tmp/stanford-fraction-colors.png'});
+    await desktop.grantPermissions(['clipboard-read','clipboard-write']);const latex=String.raw`p_i=\frac{e^{z_i}}{\sum_j e^{z_j}}`;
+    await field.evaluate(e=>e.value='');await field.focus();await wide.evaluate(text=>navigator.clipboard.writeText(text),latex);await wide.keyboard.press('Control+V');assert.equal(await field.evaluate(e=>e.value),latex);
+    await wide.locator('[data-tab=library]').click();
     await wide.locator('[data-node=linear]').click();await wide.locator('#linear3D').click();await wide.locator('#threeStage canvas').waitFor({state:'visible'});await wide.screenshot({path:'/tmp/stanford-linear-desktop.png',fullPage:true});const fallback=await desktop.newPage();await fallback.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(kind,...args){return kind.startsWith('webgl')?null:original.call(this,kind,...args);};});await fallback.goto(url+'?node=linear&tab=library');await fallback.locator('#linear3D').click();assert.match(await fallback.locator('#linearViewHelp').textContent(),/二维决策边界仍可互动/);assert(await fallback.locator('#linearCanvas').isVisible());await set(fallback,'biasC',1);assert.match(await fallback.locator('#linearResult').textContent(),/1.590/);await desktop.close();
-    console.log('PASS: full catalogs and transparent gaps; global search; knowledge-to-practice/derivation; kNN/linear/Softmax/Attention/gradient/convolution math; mobile/desktop; true cold offline 3D + MathLive + 20 fonts; explicit atomic update; missing-font/Three rejection; no external runtime requests.');
+    console.log('PASS: full catalogs and transparent gaps; global search; knowledge-to-practice/derivation; interactive math; mobile/desktop; true cold offline 3D + MathLive + 20 fonts; real keyboard Softmax in all three editors; native keyboard toggles; readable fraction focus; LaTeX clipboard paste; explicit atomic update; missing-font/Three rejection; no external runtime requests.');
   }finally{await browser.close();server.close();}
 })().catch(e=>{console.error(e);server.close();process.exitCode=1;});

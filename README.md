@@ -114,6 +114,8 @@ iOS 可能回收网站缓存，若缓存被移除，重新联网准备。
 MathLive **0.111.0** 与 Three.js **0.180.0** 均固定版本、同源加载，保留 MIT 许可证。
 Three.js 按需加载并渲染，没有持续动画循环；关闭知识点会清理场景，无 WebGL 时
 二维实验仍可使用。数学键盘声音关闭，未使用 Compute Engine 或运行时 CDN。
+练习、推导和草稿仅保留输入框右侧的数学键盘图标；旁边的「怎么输入公式？」
+可展开查看下标、上标、分数与求和的按键方式。完整 LaTeX 可直接粘贴。
 
 manifest 提供 192 / 512 PNG 和 SVG 图标；HTML 单独设置 180×180 不透明 PNG
 `apple-touch-icon`。这比只依赖 SVG manifest icon 更适合 iPhone 安装入口。
@@ -131,6 +133,7 @@ manifest 提供 192 / 512 PNG 和 SVG 图标；HTML 单独设置 180×180 不透
 测试在 `/stanford-cs-gym/` 子路径下验证完整目录、跨课程搜索、知识点跳转、题型空态、
 互动数值、2D / 3D / WebGL 降级、手机与桌面布局；禁用 HTTP 缓存并实际阻断网络后，
 从新页面验证 3D、MathLive、全部字体；检查显式更新和字体 / Three 缺失时拒绝安装。
+三个输入区均通过实际键盘输入 Softmax，并验证原生键盘开关、分数编辑颜色与 LaTeX 粘贴。
 测试验证运行时没有外部请求。移动端测试使用 Chromium 的 iPhone 尺寸；未声称在
 实体 iPhone Safari 上测试安装。
 

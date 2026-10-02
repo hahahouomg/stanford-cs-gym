@@ -1,5 +1,5 @@
 const PREFIX = 'stanford-cs-gym-';
-const CACHE = `${PREFIX}v4`;
+const CACHE = `${PREFIX}v5`;
 const CORE = [
   './', './index.html', './assets/styles.css', './assets/app.js',
   './assets/hub.js', './assets/labs.js', './assets/linear-lab.js',
