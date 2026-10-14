@@ -180,6 +180,19 @@ export const reviews = [
   }
 ];
 
+// Original self-tests, not official assignment solutions.
+reviews.push(
+  {id:'regularization-choice',courses:['CS231n','CS336'],type:'concept',title:'正则化如何改变模型选择？',prompt:'A：数据损失 0.8、Σw²=1；B：0.5、Σw²=9。在 λ=0 和 λ=0.05 时，L=Ldata+λΣw² 各选谁？',answerText:'λ=0 时选 B。λ=0.05 时 A=0.85、B=0.95，按总目标选 A；这不证明 A 的测试准确率更高。',hints:['把数据损失与权重代价相加。'],why:'区分训练目标与泛化评估。'},
+  {id:'regularization-gradient',courses:['CS231n','CS336'],type:'formula',title:'L2 正则项的梯度',prompt:'R=λΣᵢwᵢ²。写出对 wᵢ 的偏导，注意没有 1/2 因子。',answer:'\\frac{\\partial R}{\\partial w_i}=2\\lambda w_i',hints:['对 wᵢ² 求导。'],why:'核对损失与梯度的系数约定。'},
+  {id:'gradient-update',courses:['CS231n','CS336'],type:'formula',title:'梯度下降走一步',prompt:'L(w)=w²/2，w=3，η=0.2。写出更新后的 w。',answer:'w_{new}=3-0.2\\times3=2.4',hints:['梯度为 w，沿负梯度方向更新。'],why:'区分正确方向与合适步长。'},
+  {id:'momentum-history',courses:['CS231n','CS336'],type:'concept',title:'Momentum 多记住了什么？',prompt:'连续梯度方向一致，和梯度不断来回变号时，历史方向累积有什么不同？',answerText:'一致方向会被保留；来回变号的分量会部分抵消。更新尺度取决于动量和学习率定义，不能保证总是更快。',hints:['把历史梯度看成方向记忆。'],why:'从机制理解优化器。'},
+  {id:'adamw-decoupling',courses:['CS231n','CS336'],type:'concept',title:'AdamW 的 weight decay',prompt:'在 Adam 中把 L2 项加到损失，与 AdamW 单独施加权重衰减，一般是同一个更新吗？',answerText:'一般不是。Adam 自适应缩放来自 L2 的梯度；AdamW 将参数衰减与自适应梯度更新解耦。',hints:['正则项是否一起进入自适应统计？'],why:'避免把不同优化器的 weight_decay 当成同一实现。'},
+  {id:'linear-stack',courses:['CS231n','CS336'],type:'concept',title:'只叠线性层会变成非线性吗？',prompt:'两个带偏置的线性层之间没有激活函数。加深后能解决原始输入的 XOR 吗？',answerText:'不能。W₂(W₁x+b₁)+b₂ 可合并成仿射变换；需要非线性激活或非线性特征。',hints:['展开矩阵乘法并合并偏置。'],why:'理解激活函数的作用。'},
+  {id:'relu-gradient',courses:['CS231n','CS336'],type:'concept',title:'ReLU 的局部梯度',prompt:'ReLU(x)=max(0,x)。x<0、x>0 的导数是多少？x=0 呢？',answerText:'负区间为 0，正区间为 1。0 点不可导；本站实验采用常见的 0 约定。',hints:['分别看两段直线的斜率。'],why:'区分数学不可导点和实现约定。'},
+  {id:'backprop-example',courses:['CS231n','CS336'],type:'formula',title:'在计算图上反向传梯度',prompt:'f=(x+y)z，x=2、y=−3、z=−4。写出 f 对 x、y、z 的偏导数值。',answer:'\\frac{\\partial f}{\\partial x}=-4,\\quad\\frac{\\partial f}{\\partial y}=-4,\\quad\\frac{\\partial f}{\\partial z}=-1',hints:['保存 q=x+y，再对乘法节点求局部导数。'],why:'连接中间量、局部导数和上游梯度。'},
+  {id:'shared-gradient',courses:['CS231n','CS336'],type:'concept',title:'共享输入的梯度怎么合并？',prompt:'f=x×x，同一个 x 走两条边。x=3 时为什么梯度是 6，而不是 3 或 9？',answerText:'两条路径各贡献 x；相加得到 2x=6。前向结果 9 不等于梯度。',hints:['沿两条边分别求导，然后相加。'],why:'避免共享变量梯度被覆盖或相乘。'}
+);
+
 export const derivations = [
   {
     id:'softmax-to-kl',

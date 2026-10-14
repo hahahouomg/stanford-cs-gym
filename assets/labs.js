@@ -7,6 +7,7 @@ export function softmax(z) {
 }
 export async function mountDemo(id,root) {
   if(id==='linear') return (await import('./linear-lab.js')).mountLinear(root);
+  if(['regularization','activations','backprop'].includes(id)) return (await import('./foundations-lab.js')).mountFoundation(id,root);
   return ({knn:mountKnn,softmax:mountSoftmax,split:mountSplit,gradient:mountGradient,convolution:mountConvolution,attention:mountAttention}[id] || (()=>{}))(root);
 }
 

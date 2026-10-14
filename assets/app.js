@@ -266,7 +266,7 @@ function initOffline() {
     const controller = navigator.serviceWorker.controller;
     if (!controller) return;
     const channel = new MessageChannel();
-    channel.port1.onmessage = e => { ready = e.data?.version === 'stanford-cs-gym-v5'; display(); channel.port1.close(); };
+    channel.port1.onmessage = e => { ready = e.data?.version === 'stanford-cs-gym-v6'; display(); channel.port1.close(); };
     controller.postMessage({type:'GET_VERSION'}, [channel.port2]);
   }
   navigator.serviceWorker.addEventListener('controllerchange', () => {

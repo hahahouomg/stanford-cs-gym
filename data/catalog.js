@@ -1,10 +1,11 @@
 // Official structure is independent of the amount of local teaching content.
 // Numbers are pinned to these offerings, never inferred from the question bank.
+import { unitReadings } from './readings.js';
 const vision = [
   ['课程导论','Introduction',['视觉任务','表示与数据'],'representation'],
   ['图像分类与线性分类器','Image Classification with Linear Classifiers',['图像表示','kNN 与距离','数据划分','线性分类','Softmax 损失'],'representation knn validation linear softmax'],
-  ['正则化与优化','Regularization and Optimization',['正则化','SGD','Momentum / Adam','学习率'],'optimization'],
-  ['神经网络与反向传播','Neural Networks and Backpropagation',['多层感知机','计算图','链式法则'],'backprop'],
+  ['正则化与优化','Regularization and Optimization',['正则化','SGD','Momentum / Adam','学习率'],'regularization optimization optimizers'],
+  ['神经网络与反向传播','Neural Networks and Backpropagation',['多层感知机','计算图','链式法则'],'neural-networks backprop'],
   ['卷积神经网络','Image Classification with CNNs',['局部感受野','卷积与池化','参数共享'],'convolution'],
   ['CNN 架构','CNN Architectures',['Batch Normalization','迁移学习','AlexNet / VGG / ResNet'],''],
   ['循环神经网络','Recurrent Neural Networks',['RNN / LSTM / GRU','语言模型','图像描述'],''],
@@ -89,11 +90,14 @@ catalog.CS336.units.forEach((u,i)=>{
   if (file) u.resources.push({title:file.endsWith('.pdf')?'官方 slides':'官方可执行讲义',kind:'官方',url:file.endsWith('.pdf')?`https://github.com/stanford-cs336/spring2025-lectures/blob/main/nonexecutable/${encodeURIComponent(file)}`:`https://cs336.stanford.edu/spring2025-lectures/?trace=var/traces/${file}.json`});
 });
 [10,11,12].forEach(n=>catalog.CS329A.units[n-1].kind='presentation');
+for(const [course,readings] of Object.entries(unitReadings)){
+  for(const unit of catalog[course].units)unit.resources.push(...(readings[unit.id]||[]));
+}
 
 // The node/unit associations are this site's study index, not an official assignment schedule.
 export const assignments = {
   CS231n:[
-    {id:'a1',title:'Assignment 1 · 分类基础',url:'https://cs231n.github.io/assignments2025/assignment1/',units:[2,3,4],nodeIds:['representation','knn','validation','linear','softmax','optimization','backprop'],tasks:['Q1 · knn.ipynb：距离、向量化、验证选 k','Q2 · softmax.ipynb：Softmax 分类器','Q3 · 两层网络；Q4 · 图像特征；Q5 · 全连接网络'],start:'你现在先做 Q1 的距离与验证部分；Q2 的训练实现可结合 Lecture 3。'},
+    {id:'a1',title:'Assignment 1 · 分类基础',url:'https://cs231n.github.io/assignments2025/assignment1/',units:[2,3,4],nodeIds:['representation','knn','validation','linear','softmax','regularization','optimization','optimizers','neural-networks','backprop'],tasks:['Q1 · knn.ipynb：距离、向量化、验证选 k','Q2 · softmax.ipynb：Softmax 分类器','Q3 · 两层网络；Q4 · 图像特征；Q5 · 全连接网络'],start:'先做 Q1 的距离与验证部分；Q2 的训练实现可结合 Lecture 3。'},
     {id:'a2',title:'Assignment 2 · CNN 与 RNN',url:'https://cs231n.github.io/assignments2025/assignment2/',units:[4,5,6,7],nodeIds:['backprop','convolution'],tasks:['Batch / Layer Normalization、Dropout','CNN、PyTorch CIFAR-10','Vanilla RNN 图像描述']},
     {id:'a3',title:'Assignment 3 · Transformer 与生成模型',url:'https://cs231n.github.io/assignments2025/assignment3/',units:[8,12,13,14,16],nodeIds:['attention','softmax','ce-kl'],tasks:['Transformer 图像描述','自监督学习','DDPM、CLIP 与 DINO']}
   ],

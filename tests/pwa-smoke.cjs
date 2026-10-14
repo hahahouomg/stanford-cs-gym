@@ -5,7 +5,7 @@ const path=require('node:path');
 const http=require('node:http');
 const {chromium,devices}=require('playwright');
 const root=path.resolve(__dirname,'..'),base='/stanford-cs-gym/';
-let failFile='',revision='v5';
+let failFile='',revision='v6';
 const mime={'.html':'text/html','.js':'application/javascript','.css':'text/css','.webmanifest':'application/manifest+json','.png':'image/png','.svg':'image/svg+xml','.woff2':'font/woff2'};
 const server=http.createServer((req,res)=>{
   const pathname=new URL(req.url,'http://localhost').pathname;
@@ -16,11 +16,15 @@ const server=http.createServer((req,res)=>{
   if(failFile&&target.endsWith(failFile)){res.writeHead(404).end();return;}
   if(!fs.existsSync(target)||!fs.statSync(target).isFile()){res.writeHead(404).end();return;}
   let body=fs.readFileSync(target);
-  if(revision!=='v5'&&['sw.js','app.js'].some(f=>target.endsWith(f)))body=Buffer.from(body.toString().replaceAll('v5',revision));
+  if(revision!=='v6'&&['sw.js','app.js'].some(f=>target.endsWith(f)))body=Buffer.from(body.toString().replaceAll('v6',revision));
   res.writeHead(200,{'Content-Type':mime[path.extname(target)]||'text/plain','Cache-Control':'no-store'}).end(body);
 });
 const set=async(page,id,value)=>page.locator('#'+id).evaluate((e,v)=>{e.value=v;e.dispatchEvent(new Event('input'));},String(value));
 const openNode=async(page,id)=>{await page.locator('[data-tab=library]').click();await page.locator('[data-browse=shared]').click();await page.locator(`[data-node="${id}"]`).click();};
+const jumpUnit=async(page,course,unit)=>{
+  await page.locator('[data-tab=library]').click();await page.locator('[data-browse=course]').click();await page.locator('#courseSelect').selectOption(course);
+  await page.locator('#catalogDrawer').evaluate(e=>e.open=true);await page.locator(`[data-unit="${unit}"]`).click();
+};
 // Real keystrokes: nested subscripts must be exited before moving to the denominator.
 const typeSoftmax=async(page,id)=>{
   const field=page.locator('#'+id);await field.evaluate(e=>e.value='');await field.focus();
@@ -49,6 +53,9 @@ const toggleKeyboard=async(page,id)=>{
     assert.equal(await page.locator('#lectureList button').count(),18);
     assert.equal(await page.locator('#lectureSelect').inputValue(),'lecture2');
     assert.equal(await page.locator('.knowledge-card').count(),5);
+    assert(await page.locator('.study-route').isVisible());assert.equal(await page.locator('.reading-entry a').count(),1);
+    assert.match(await page.locator('.reading-entry a').getAttribute('href'),/cs231n\/lecture02/);
+    assert(!(await page.locator('.unit-sources').evaluate(e=>e.open)));
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
     assert(await page.locator('.assignment-card a').filter({hasText:/Assignment 1/}).first().isVisible());
     await page.screenshot({path:'/tmp/stanford-hub-mobile.png',fullPage:true});
@@ -92,9 +99,22 @@ const toggleKeyboard=async(page,id)=>{
     await openNode(page,'optimization');await set(page,'learningRate',1);await page.locator('#gradientStep').click();assert.match(await page.locator('#gradientResult').textContent(),/w = 0.000/);
     await set(page,'learningRate',2.2);await page.locator('#gradientStep').click();assert.match(await page.locator('#gradientResult').textContent(),/w = -3.600/);
     await openNode(page,'convolution');assert.match(await page.locator('#convResult').textContent(),/= 3/);await set(page,'windowPosition',2);assert.match(await page.locator('#convResult').textContent(),/= 0/);
-    const cached=await page.evaluate(async()=>(await(await caches.open('stanford-cs-gym-v5')).keys()).map(r=>r.url));
+    await jumpUnit(page,'CS329A','lecture8');assert.match(await page.locator('.reading-entry a').getAttribute('href'),/cs329a\/lecture07/);
+    await jumpUnit(page,'CS329A','lecture7');assert.equal(await page.locator('.reading-entry').count(),0);
+    await jumpUnit(page,'CS336','lecture18');assert.equal(await page.locator('.reading-entry').count(),0);
+    await jumpUnit(page,'CS231n','lecture2');await page.locator('[data-node=representation]').click();
+    assert.equal(await page.locator('.guide-example').count(),1);assert.equal(await page.locator('.guide-check details[open]').count(),0);
+    await page.locator('.guide-check summary').first().click();assert(await page.locator('.guide-check details').first().evaluate(e=>e.open));
+    await page.locator('[data-study-node=knn]').click();assert.match(await page.locator('#nodeTitle').textContent(),/kNN/);
+    await page.locator('#backLibrary').click();await page.locator('#nextStudyUnit').click();assert.equal(await page.locator('.knowledge-card').count(),3);
+    assert.match(await page.locator('.assignment-start').first().textContent(),/Q2/);
+    await page.locator('#nextStudyUnit').click();assert.equal(await page.locator('.knowledge-card').count(),2);
+    assert.match(await page.locator('.assignment-start').first().textContent(),/Q3/);
+    assert.equal(await page.locator('#unitContent > .assignment-grid .assignment-card').count(),1);
+    await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:'/tmp/stanford-learning-route-mobile.png',fullPage:true});
+    const cached=await page.evaluate(async()=>(await(await caches.open('stanford-cs-gym-v6')).keys()).map(r=>r.url));
     assert.equal(cached.filter(x=>x.endsWith('.woff2')).length,20);
-    for(const file of ['three.core.min.js','three.module.min.js','OrbitControls.js','linear-lab.js','knowledge.js','catalog.js'])assert(cached.some(u=>u.endsWith(file)));
+    for(const file of ['three.core.min.js','three.module.min.js','OrbitControls.js','linear-lab.js','knowledge.js','catalog.js','readings.js','study-guides.js','foundations-lab.js','ai-course-notes.txt'])assert(cached.some(u=>u.endsWith(file)));
     await context.setOffline(true);
     const cold=await context.newPage();cold.on('pageerror',e=>errors.push(e.message));
     const cdp=await context.newCDPSession(cold);await cdp.send('Network.enable');await cdp.send('Network.setCacheDisabled',{cacheDisabled:true});await cdp.send('Network.emulateNetworkConditions',{offline:true,latency:0,downloadThroughput:0,uploadThroughput:0});
@@ -117,17 +137,44 @@ const toggleKeyboard=async(page,id)=>{
     await cold.evaluate(()=>document.fonts.ready);assert(await cold.evaluate(()=>document.fonts.check('20px KaTeX_Main')));
     await openNode(cold,'softmax');for(const id of ['z0','z1','z2'])await set(cold,id,0);assert.match(await cold.locator('#labResults').textContent(),/loss = 1.099/);
     await cold.reload();await cold.locator('#labResults').waitFor();assert.match(await cold.locator('#nodeTitle').textContent(),/Softmax/);
+    await jumpUnit(cold,'CS231n','lecture3');await cold.locator('[data-node=regularization]').click();await cold.locator('#regularizationResult').waitFor();
+    assert.match(await cold.locator('#regularizationResult').textContent(),/选择 A/);
+    await set(cold,'regularizationLambda',0);assert.match(await cold.locator('#regularizationResult').textContent(),/选择 B/);
+    assert.equal(await cold.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    await cold.locator('[data-study-node=optimization]').click();await cold.locator('#gradientStep').click();assert.match(await cold.locator('#gradientResult').textContent(),/w = 2.400/);
+    await cold.locator('[data-study-node=optimizers]').click();assert(await cold.locator('#studyAssignment').isVisible());
+    await cold.locator('#studyAssignment').click();assert.match(await cold.locator('.assignment-start').first().textContent(),/Q2/);
+    await cold.locator('#nextStudyUnit').click();await cold.locator('[data-node=neural-networks]').click();await cold.locator('#activationResult').waitFor();
+    await set(cold,'activationInput',-2);assert.match(await cold.locator('#activationResult').textContent(),/局部梯度=0/);
+    await set(cold,'activationInput',0);assert.match(await cold.locator('#activationResult').textContent(),/约定/);
+    await set(cold,'activationInput',2);assert.match(await cold.locator('#activationResult').textContent(),/局部梯度=1/);
+    await cold.locator('[data-study-node=backprop]').click();await cold.locator('#backpropStep').click();await cold.locator('#backpropStep').click();
+    assert.match(await cold.locator('#backpropResult').textContent(),/df\/dx=-4，df\/dy=-4，df\/dz=-1/);
+    assert(await cold.locator('#backpropStep').isDisabled());await set(cold,'backpropZ',2);assert(!(await cold.locator('#backpropStep').isDisabled()));
+    await cold.locator('#backpropStep').click();await cold.locator('#backpropStep').click();assert.match(await cold.locator('#backpropResult').textContent(),/df\/dx=2，df\/dy=2，df\/dz=-1/);
+    assert.equal(await cold.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    assert(await cold.evaluate(async()=>{const r=await fetch('./licenses/ai-course-notes.txt');return r.ok&&(await r.text()).includes('CC BY-NC-SA');}));
+    assert.equal(await cold.locator('.topbar').count(),1);assert.equal(await cold.locator('#courseSelect').count(),1);
+    await cold.locator('#unitContent').screenshot({path:'/tmp/stanford-backprop-mobile.png'});
+    await cold.locator('#nodePractice').click();assert.equal(await cold.locator('#questionSelect option').count(),2);
     await cold.locator('[data-tab=resources]').click();assert.match(await cold.locator('#resources').textContent(),/自编题/);
     await context.setOffline(false);await cold.close();
     // Explicit activation swaps the entire release; broken installs cannot advertise readiness.
-    revision='v6';await page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();await r.update();});await page.locator('#updateApp').waitFor({state:'visible'});
-    assert.equal(await page.evaluate(()=>new Promise(resolve=>{const c=new MessageChannel();c.port1.onmessage=e=>resolve(e.data.version);navigator.serviceWorker.controller.postMessage({type:'GET_VERSION'},[c.port2]);})),'stanford-cs-gym-v5');
+    revision='v7';await page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();await r.update();});await page.locator('#updateApp').waitFor({state:'visible'});
+    assert.equal(await page.evaluate(()=>new Promise(resolve=>{const c=new MessageChannel();c.port1.onmessage=e=>resolve(e.data.version);navigator.serviceWorker.controller.postMessage({type:'GET_VERSION'},[c.port2]);})),'stanford-cs-gym-v6');
     await page.locator('#updateApp').click();await page.waitForFunction(()=>document.querySelector('#offlineStatus').textContent==='离线可用 ✓'&&!document.querySelector('#updateApp').offsetParent);
-    assert.deepEqual(await page.evaluate(()=>caches.keys()),['stanford-cs-gym-v6']);await context.close();
-    revision='v5';
-    for(const missing of ['KaTeX_Size4-Regular.woff2','three.core.min.js']){
+    assert.deepEqual(await page.evaluate(()=>caches.keys()),['stanford-cs-gym-v7']);await context.close();
+    revision='v6';
+    for(const missing of ['KaTeX_Size4-Regular.woff2','three.core.min.js','study-guides.js']){
       failFile=missing;const failure=await browser.newContext();const f=await failure.newPage();await f.goto(url);
-      await f.waitForFunction(()=>document.querySelector('#offlineStatus').textContent.includes('失败'));
+      if(missing==='study-guides.js'){
+        // A missing imported module prevents app bootstrap. Register the real worker
+        // directly to verify its atomic install cannot activate with this missing CORE.
+        await f.evaluate(async()=>{
+          const r=await navigator.serviceWorker.register('./sw.js'),w=r.installing;
+          if(w&&w.state!=='redundant')await new Promise(resolve=>w.addEventListener('statechange',()=>{if(w.state==='redundant')resolve();}));
+        });
+      }else await f.waitForFunction(()=>document.querySelector('#offlineStatus').textContent.includes('失败'));
       assert.equal(await f.evaluate(async()=>(await navigator.serviceWorker.getRegistration())?.active?.state||null),null);await failure.close();
     }
     failFile='';assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
@@ -143,6 +190,6 @@ const toggleKeyboard=async(page,id)=>{
     await field.evaluate(e=>e.value='');await field.focus();await wide.evaluate(text=>navigator.clipboard.writeText(text),latex);await wide.keyboard.press('Control+V');assert.equal(await field.evaluate(e=>e.value),latex);
     await wide.locator('[data-tab=library]').click();
     await wide.locator('[data-node=linear]').click();await wide.locator('#linear3D').click();await wide.locator('#threeStage canvas').waitFor({state:'visible'});await wide.screenshot({path:'/tmp/stanford-linear-desktop.png',fullPage:true});const fallback=await desktop.newPage();await fallback.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(kind,...args){return kind.startsWith('webgl')?null:original.call(this,kind,...args);};});await fallback.goto(url+'?node=linear&tab=library');await fallback.locator('#linear3D').click();assert.match(await fallback.locator('#linearViewHelp').textContent(),/二维决策边界仍可互动/);assert(await fallback.locator('#linearCanvas').isVisible());await set(fallback,'biasC',1);assert.match(await fallback.locator('#linearResult').textContent(),/1.590/);await desktop.close();
-    console.log('PASS: full catalogs and transparent gaps; global search; knowledge-to-practice/derivation; interactive math; mobile/desktop; true cold offline 3D + MathLive + 20 fonts; real keyboard Softmax in all three editors; native keyboard toggles; readable fraction focus; LaTeX clipboard paste; explicit atomic update; missing-font/Three rejection; no external runtime requests.');
+    console.log('PASS: full catalogs; topic/version reading maps; ordered L2–L4 routes; hidden-answer self-checks; knowledge-to-practice/derivation/assignments; mobile/desktop; true cold offline 3D, MathLive, 20 fonts and all three new foundation labs; real keyboard Softmax; readable fraction focus; clipboard paste; explicit atomic update; missing-font/Three/guide rejection; no external runtime requests.');
   }finally{await browser.close();server.close();}
 })().catch(e=>{console.error(e);server.close();process.exitCode=1;});

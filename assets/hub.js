@@ -1,6 +1,8 @@
 import { catalog, assignments, unitLabel } from '../data/catalog.js';
 import { knowledge, nodeById } from '../data/knowledge.js';
 import { mountDemo } from './labs.js';
+import { studyRoutes, studyGuides } from '../data/study-guides.js';
+import { nodeReadings, collectionReadings } from '../data/readings.js';
 
 export const escapeHtml = (str='')=>String(str).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const math=latex=>latex.split(/,\\quad/).map(p=>`<math-field read-only>${escapeHtml(p)}</math-field>`).join('');
@@ -72,7 +74,64 @@ export function createHub({getState,onUnit,onPractice,onDerivation}) {
       ${related.length?`<div class="hub-section-heading"><h3>关联作业</h3><span class="caption">官方原题 · 学习关联由本站整理</span></div><div class="assignment-grid">${assignmentCards(related)}</div>`:''}
       <details class="reference-details unit-sources" open><summary>本讲资料 <small class="caption">原文需要网络</small></summary><div class="source-grid">${links([{title:'完整官方课表与阅读',url:c.source,kind:'官方'},...unit.resources])}</div></details>
       <details class="reference-details"><summary>${course} · 全部作业与项目</summary><div class="assignment-grid">${assignmentCards(assignments[course])}</div></details>`;
+    decorateUnit(course,unit);
     wireCards();
+  }
+  function decorateUnit(course,unit){
+    const route=studyRoutes[course]?.[unit.id];
+    if(route){
+      const grid=root.querySelector('.knowledge-grid');
+      grid.insertAdjacentHTML('beforebegin','<div class="study-route"><strong>本讲学习路线</strong><p>'+escapeHtml(route.goal)+'</p><span>先预测 → 调实验 → 解释原因 → 按需练题</span></div>');
+      grid.querySelectorAll('.knowledge-card').forEach((card,i)=>{
+        card.querySelector('.card-subtitle').textContent=route.tasks[i];
+        card.querySelector('.card-type').textContent=(i+1)+' / '+unit.nodeIds.length+' · '+card.querySelector('.card-type').textContent;
+      });
+      if(grid.nextElementSibling?.matches('p.caption'))grid.nextElementSibling.remove();
+      const related=assignments[course].filter(a=>a.id===route.assignmentId).map(a=>({...a,tasks:[],start:route.assignmentTask}));
+      root.querySelector('.assignment-grid').innerHTML=assignmentCards(related);
+      const next=catalog[course].units.find(u=>u.id===route.next);
+      if(next){
+        root.lastElementChild.insertAdjacentHTML('afterend','<button class="ghost next-unit" id="nextStudyUnit">下一讲 · '+escapeHtml(next.title)+' →</button>');
+        root.querySelector('#nextStudyUnit').addEventListener('click',()=>{onUnit(course,next.id);render();root.scrollIntoView({block:'start'});});
+      }
+    }
+    const readings=unit.resources.filter(r=>r.kind==='中文笔记');
+    const sources=root.querySelector('.unit-sources');
+    sources.open=!unit.nodeIds.length&&!readings.length;
+    if(readings.length){
+      sources.insertAdjacentHTML('beforebegin','<div class="reading-entry">'+links(readings)+'</div><p class="caption reading-notice">完整讲义需联网；本站导读、实验与自测可离线。</p>');
+      const urls=new Set(readings.map(r=>r.url));
+      sources.querySelectorAll('a').forEach(a=>{if(urls.has(a.href)||a.href===catalog[course].source)a.remove();});
+    }
+    const collections=collectionReadings[course];
+    if(collections)sources.insertAdjacentHTML('afterend','<details class="reference-details"><summary>其他版本与主题目录</summary><div class="source-grid">'+links(collections)+'</div></details>');
+  }
+  function decorateNode(n){
+    const guide=studyGuides[n.id],readings=nodeReadings[n.id]||[];
+    if(guide){
+      const example=guide.example;
+      const steps=example.steps.map(([title,text])=>'<li><strong>'+escapeHtml(title)+'</strong><p>'+escapeHtml(text)+'</p></li>').join('');
+      const chapters=readings.map(r=>'<a href="'+escapeHtml(r.url)+'" target="_blank" rel="noreferrer">'+escapeHtml(r.title)+' ↗</a>').join('');
+      root.querySelector('.explanation-grid').insertAdjacentHTML('afterend','<details class="guide-example" open><summary>跟着算一次 · '+escapeHtml(example.title)+'</summary><ol>'+steps+'</ol><p class="guide-pitfall"><strong>容易混淆：</strong>'+escapeHtml(guide.pitfall)+'</p><div class="chapter-links">'+chapters+'</div><p class="caption guide-credit">中文章节需联网。本站导读经改编、补充与校正 · <a href="./licenses/ai-course-notes.txt" target="_blank" rel="noreferrer">来源与 CC BY-NC-SA 说明</a></p></details>');
+      const recall=root.querySelector('.recall-prompt');
+      recall.querySelector('strong').textContent='先用自己的话答，再展开核对';
+      recall.querySelector('p').remove();
+      recall.querySelector('.review-actions').insertAdjacentHTML('beforebegin',guide.checks.map(([q,a])=>'<div class="guide-check"><p>'+escapeHtml(q)+'</p><details><summary>展开参考解释</summary><p>'+escapeHtml(a)+'</p></details></div>').join(''));
+    }
+    const readingTitle=[...root.querySelectorAll('.hub-section-heading')].find(h=>h.querySelector('h3')?.textContent==='继续阅读');
+    if(readingTitle){
+      const grid=readingTitle.nextElementSibling;
+      grid.innerHTML=links([...(guide?[]:readings),...n.resources]);
+      readingTitle.insertAdjacentHTML('beforebegin','<details class="reference-details node-sources"><summary>更多参考资料 <small class="caption">原文需联网</small></summary></details>');
+      const drawer=readingTitle.previousElementSibling;drawer.append(grid);readingTitle.remove();
+    }
+    const {course,lecture}=getState(),unit=catalog[course].units.find(u=>u.id===lecture),ids=unit?.nodeIds||[],i=ids.indexOf(n.id);
+    if(studyRoutes[course]?.[lecture]&&i>=0){
+      const progress='<nav class="study-navigation" aria-label="本讲知识点导航"><span>本讲 '+(i+1)+' / '+ids.length+'</span>'+(i>0?'<button class="ghost small" data-study-node="'+ids[i-1]+'">← 上一知识点</button>':'')+(i<ids.length-1?'<button class="ghost small" data-study-node="'+ids[i+1]+'">下一知识点 →</button>':'<button class="ghost small" id="studyAssignment">去本讲作业 ↓</button>')+'</nav>';
+      root.querySelector('.node-heading').insertAdjacentHTML('afterend',progress);
+      root.querySelectorAll('[data-study-node]').forEach(b=>b.addEventListener('click',()=>openNode(b.dataset.studyNode,true)));
+      root.querySelector('#studyAssignment')?.addEventListener('click',()=>{render();root.querySelector('.assignment-grid').scrollIntoView({block:'start'});});
+    }
   }
   function renderSearch() {
     const s=query.value.trim().toLocaleLowerCase().replace(/\s+/g,'');
@@ -98,6 +157,7 @@ export function createHub({getState,onUnit,onPractice,onDerivation}) {
       <div class="hub-section-heading"><h3>继续阅读</h3><span class="caption">来源可查 · 原文需要网络</span></div><div class="source-grid">${links(n.resources)}</div>
       ${matching.length?`<details class="reference-details"><summary>相关官方作业与项目</summary><div class="assignment-grid">${assignmentCards(matching)}</div></details>`:''}
       <details class="reference-details"><summary>在哪些课中复习它？</summary><div class="context-links">${contexts.map(({c,u})=>`<button class="ghost small" data-context="${c}:${u.id}">${c} · ${unitLabel(u)} · ${escapeHtml(u.title)}</button>`).join('')}</div></details>`;
+    decorateNode(n);
     root.querySelector('#backLibrary').addEventListener('click',()=>{render();if(scroll) root.scrollIntoView({block:'start'});});
     root.querySelector('#nodePractice')?.addEventListener('click',()=>onPractice(n,course,lecture));
     root.querySelector('#nodeDerive')?.addEventListener('click',()=>onDerivation(n.derivationId));

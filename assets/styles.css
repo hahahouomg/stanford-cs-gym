@@ -105,6 +105,46 @@ p{line-height:1.7}
 .recall-prompt .review-actions:empty{display:none}
 .context-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
 .context-links button{text-align:left;font-size:12px}
+.study-route{padding:16px 18px;margin:0 0 16px;border:1px solid #77d7aa30;background:#77d7aa06;border-radius:14px}
+.study-route strong{font-size:12px;color:var(--good)}
+.study-route p{font-size:14px;line-height:1.8;margin:8px 0}
+.study-route>span{font-size:11px;color:var(--muted)}
+.reading-entry{margin-top:20px}
+.reading-entry .source-link{background:#8cb8ff08}
+.reading-notice{margin:8px 0}
+.next-unit{display:block;margin-top:20px;width:100%;text-align:left;font-size:13px}
+.study-navigation{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 20px}
+.study-navigation>span{font-size:12px;color:var(--muted);margin-right:auto}
+.guide-example{margin-top:22px;border:1px solid var(--line);background:#ffffff03;border-radius:14px;padding:18px}
+.guide-example summary{cursor:pointer;min-height:32px;font-size:14px;font-weight:650;line-height:1.8}
+.guide-example ol{padding-left:23px;margin:18px 0}
+.guide-example li{padding-left:5px;font-size:13px;color:var(--muted)}
+.guide-example li::marker{color:var(--good)}
+.guide-example li strong{color:var(--text);font-size:13px}
+.guide-example li p{margin:6px 0 16px;line-height:1.9}
+.guide-pitfall{border-left:3px solid var(--accent);padding:10px 14px;background:#ffcf5406;font-size:12px;line-height:1.9}
+.chapter-links{display:flex;flex-wrap:wrap;gap:10px 16px}
+.chapter-links a{font-size:12px;line-height:1.9;text-underline-offset:3px}
+.guide-credit{margin-bottom:0}
+.guide-check{margin:16px 0}
+.guide-check>p{margin-bottom:6px}
+.guide-check summary{font-size:12px;min-height:32px;cursor:pointer;color:var(--accent-2)}
+.guide-check details p{padding:10px 14px;margin:4px 0;background:#77d7aa09;border-radius:8px;color:#d8e1ef}
+.candidate-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.candidate-grid article,.backprop-graph article{min-width:0;padding:14px;border:1px solid var(--line);border-radius:12px;background:#070d18}
+.candidate-grid h3{font-size:14px;margin:0 0 8px}
+.candidate-grid p,.candidate-grid output{font-size:12px;color:var(--muted);line-height:1.8}
+.candidate-track{height:15px;background:#ffffff10;border-radius:4px;margin:12px 0;overflow:hidden}
+.candidate-track div{height:100%;background:var(--accent-2)}
+.candidate-grid article:nth-child(2) .candidate-track div{background:var(--accent)}
+.backprop-graph{display:grid;grid-template-columns:minmax(0,1fr) 16px minmax(0,1fr) 16px minmax(0,1fr);align-items:center;gap:8px;margin:18px 0}
+.backprop-graph article{display:grid;gap:10px;align-self:stretch}
+.backprop-graph article span,.backprop-graph article small{font-size:11px;color:var(--muted);line-height:1.7}
+.backprop-graph article strong{font-size:13px;overflow-wrap:anywhere}
+.backprop-graph .gradient-active{border-color:#77d7aa55;background:#77d7aa09}
+.backprop-graph .gradient-active small{color:var(--good)}
+.graph-arrow{color:var(--accent-2);text-align:center}
+@media(max-width:600px){.backprop-graph{grid-template-columns:1fr;gap:7px}.graph-arrow{transform:rotate(90deg)}.candidate-grid{grid-template-columns:1fr}}
 
 /* Self-contained visual labs, including the optional WebGL view. */
 .interactive-lab{padding:20px;border:1px solid #8cb8ff24;border-radius:16px;background:#0c1423}

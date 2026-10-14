@@ -1,4 +1,5 @@
 // Original short explanations. Linked author resources are not mirrored or translated wholesale.
+import { foundationNodes } from './study-guides.js';
 const resource=(title,url,author,desc,kind='作者讲解')=>({title,url,author,desc,kind});
 const classification=resource('图像分类笔记','https://cs231n.github.io/classification/','CS231n','语义差距、kNN、验证集。','官方笔记');
 const linearNote=resource('线性分类笔记','https://cs231n.github.io/linear-classify/','CS231n','几何视角和损失；SVM 是拓展阅读。','官方笔记');
@@ -19,4 +20,8 @@ export const knowledge = [
   {id:'serving',title:'Prefill · Decode · KV Cache',subtitle:'同样是生成，瓶颈为什么会变？',area:'系统与推理',icon:'chain',courses:['CS336','CS349D','CS329A'],reviewIds:['prefill-decode','paged-attention'],summary:'Prefill 并行处理输入 token；Decode 逐步生成，复用历史 Key / Value。KV cache 减少重复计算，但随着请求数和序列长度增长，占用显存。',steps:[['资源权衡','Decode 常受权重或 KV 搬运制约，但具体瓶颈取决于 batch、模型与硬件。'],['分页管理','PagedAttention 用逻辑页映射物理块来组织 KV，减少预分配浪费。它不让注意力计算本身消失。']],check:'上下文长度翻倍，KV 显存会怎样变？缓存的是所有层的输出吗？',resources:[resource('PagedAttention / vLLM','https://arxiv.org/abs/2309.06180','Kwon et al.','KV 显存管理的原论文。','原论文')]},
   {id:'verifier',title:'生成 · 验证 · 搜索',subtitle:'多生成几个答案，如何选出更好的？',area:'Agent 与推理',icon:'chain',courses:['CS329A','CS336'],reviewIds:['verifier-search'],summary:'额外计算可以生成更多候选，验证信号负责选择、排序或剪枝。验证器的误判也会被搜索放大，所以“多算”不保证“更对”。',steps:[['可检验信号','数学检查、测试执行、奖励模型都能提供信号，但可靠性和成本不同。'],['形成闭环','生成候选 → 验证 → 选择或继续搜索。预算要分配给生成和验证。']],check:'如果 verifier 总偏爱一个错误模式，增加采样次数会怎样？',resources:[resource('Training Verifiers to Solve Math Word Problems','https://arxiv.org/abs/2110.14168','Cobbe et al.','结果验证器与候选选择。','原论文'),resource('CS329A · 官方论文课表','https://cs329a.stanford.edu/','Stanford CS329A','测试时计算、验证、规划与工具反馈。','官方课程')]}
 ];
+knowledge.push(...foundationNodes);
+knowledge.find(n=>n.id==='optimization').reviewIds.push('gradient-update');
+knowledge.find(n=>n.id==='backprop').reviewIds.push('backprop-example','shared-gradient');
+knowledge.find(n=>n.id==='backprop').demo='backprop';
 export const nodeById = new Map(knowledge.map(n=>[n.id,n]));

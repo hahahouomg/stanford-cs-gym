@@ -1,0 +1,49 @@
+Stanford CS Gym — 中文笔记整合说明
+
+参考作者：AI Course Notes Contributors / hqhq1025
+原仓库：https://github.com/hqhq1025/ai-course-notes
+在线阅读：https://hqhq1025.github.io/ai-course-notes/
+核对版本：717e2df65c3d2eee593c171156a30d4f8f6812b9（2026-10-14）
+
+改编范围：data/study-guides.js 中 L2–L4 中文导读与三个基础知识点描述。
+修改：压缩为知识点导读，补充本地例子、回忆自测与作业关联；
+澄清 Softmax CE / BCE、两类分数差边界、L2 系数约定、ReLU 不可导点。
+改编内容按 CC BY-NC-SA 4.0 分享，不表示原作者或 Stanford 背书。
+其他原有本站代码和新互动实现不因这些材料自动变更许可。
+
+完整讲义、官方 slides、图片及视频仅链接，不镜像。
+原课程材料的版权属于各机构及讲者，不因笔记许可自动获得转载权限。
+
+上游许可原文：
+
+Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+
+Copyright (c) 2025-2026 AI Course Notes Contributors
+
+You are free to:
+
+  Share — copy and redistribute the material in any medium or format
+  Adapt — remix, transform, and build upon the material
+
+Under the following terms:
+
+  Attribution — You must give appropriate credit, provide a link to
+  the license, and indicate if changes were made.
+
+  NonCommercial — You may not use the material for commercial purposes.
+
+  ShareAlike — If you remix, transform, or build upon the material,
+  you must distribute your contributions under the same license.
+
+No additional restrictions — You may not apply legal terms or
+technological measures that legally restrict others from doing
+anything the license permits.
+
+Full license text:
+https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+
+Note: The original course materials (slides, videos, lectures) are
+copyrighted by their respective institutions and instructors. This
+license applies only to the notes, tools, and other original content
+in this repository.
+

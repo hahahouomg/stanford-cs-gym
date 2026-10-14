@@ -1,9 +1,10 @@
 const PREFIX = 'stanford-cs-gym-';
-const CACHE = `${PREFIX}v5`;
+const CACHE = `${PREFIX}v6`;
 const CORE = [
   './', './index.html', './assets/styles.css', './assets/app.js',
   './assets/hub.js', './assets/labs.js', './assets/linear-lab.js',
-  './data/catalog.js', './data/knowledge.js',
+  './data/catalog.js', './data/knowledge.js', './data/readings.js',
+  './data/study-guides.js', './assets/foundations-lab.js', './licenses/ai-course-notes.txt',
   './assets/vendor/three/three.module.min.js', './assets/vendor/three/three.core.min.js',
   './assets/vendor/three/OrbitControls.js',
   './data/curriculum.js', './assets/icon.svg', './assets/apple-touch-icon.png',
